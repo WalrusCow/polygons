@@ -1,5 +1,4 @@
 (function() {
-
   //////////////////////////////////////////////////////////////////////////////
   // Polygon ///////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
@@ -13,15 +12,14 @@
   Polygon.prototype.addPoint = function(coords) {
     this._points.push(coords);
     // Also draw line segment, if relevant
-    if (this._points.length > 1) {
-      var ctx = this._ctx;
-      ctx.beginPath();
-      var pt = this._points[this._points.length - 2];
-      ctx.moveTo(pt.x, pt.y);
-      pt = this._points[this._points.length - 1];
-      ctx.lineTo(pt.x, pt.y);
-      ctx.stroke();
-    }
+    if (this._points.length <= 1) return;
+    var ctx = this._ctx;
+    ctx.beginPath();
+    var pt = this._points[this._points.length - 2];
+    ctx.moveTo(pt.x, pt.y);
+    pt = this._points[this._points.length - 1];
+    ctx.lineTo(pt.x, pt.y);
+    ctx.stroke();
   };
 
   Polygon.prototype.fill = function() {
@@ -47,8 +45,8 @@
     this._canvas = document.getElementById(options.canvas);
 
     this._ctx = this._canvas.getContext('2d');
-    this._ctx.strokeStyle = 'red';
-    this._ctx.fillStyle = 'red';
+    this._ctx.strokeStyle = 'blue';
+    this._ctx.fillStyle = 'blue';
 
     this._canvas.addEventListener('click', this.onClick.bind(this));
     this._canvas.addEventListener('dblclick', this.onDblClick.bind(this));
