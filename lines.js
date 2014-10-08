@@ -1,9 +1,11 @@
 define([], function() {
   var lines = {};
 
-  //////////////////////////////////////////////////////////////////////////////
-  // Intersection //////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
+  function inRange(x, start, end) {
+    /* true if x is in the given range, inclusive */
+    return ((x - start) * (x - end) <= 0);
+  }
+
   lines.Line = function (p1, p2) {
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
     if (Math.abs(this.slope) === Infinity) {

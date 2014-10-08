@@ -1,53 +1,8 @@
-define(['util'], function(util) {
-  //////////////////////////////////////////////////////////////////////////////
-  // Polygon ///////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  function Polygon(canvas) {
-    this._points = [];
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
-  }
-
-  Polygon.prototype.addPoint = function(coords) {
-    this._points.push(coords);
-    // Also draw line segment, if relevant
-    if (this._points.length <= 1) return;
-    var ctx = this._ctx;
-    ctx.beginPath();
-    var pt = this._points[this._points.length - 2];
-    ctx.moveTo(pt.x, pt.y);
-    pt = this._points[this._points.length - 1];
-    ctx.lineTo(pt.x, pt.y);
-    ctx.stroke();
-  };
-
-  Polygon.prototype.fill = function() {
-    // Not enough to draw
-    if (this._points.length < 2) return;
-    var ctx = this._ctx;
-    ctx.beginPath();
-    var pt = this._points[0];
-    ctx.moveTo(pt.x, pt.y);
-    for (var i = 1; i < this._points.length; ++i) {
-      pt = this._points[i];
-      ctx.lineTo(pt.x, pt.y);
-    }
-    ctx.closePath();
-    ctx.fill();
-  };
-
-  //////////////////////////////////////////////////////////////////////////////
-  // Canvas wrapper ////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
+define(['polygon', 'util'], function(Polygon, util) {
   function Polygons(options) {
     this._canvas = document.getElementById(options.canvas);
 
     this._ctx = this._canvas.getContext('2d');
-    this._ctx.strokeStyle = 'blue';
-    this._ctx.fillStyle = 'blue';
-
     this._canvas.addEventListener('click', this.onClick.bind(this));
     this._canvas.addEventListener('dblclick', this.onDblClick.bind(this));
 
@@ -93,7 +48,7 @@ define(['util'], function(util) {
   };
 
   var onClick = function(e) {
-    var coords = this._getClickCoords(e);
+    var coords = util.getClickCoords(e, this._canvas);
     // Invalid click
     if (!coords) return;
 
@@ -104,26 +59,6 @@ define(['util'], function(util) {
     this._polygons[this._polygons.length - 1].addPoint(coords);
   };
   Polygons.prototype.onClick = util.rateLimit(onClick, 160);
-  //Polygons.prototype.onClick = function(e) {
-  //  var coords = this._getClickCoords(e);
-  //  // Invalid click
-  //  if (!coords) return;
-
-  //  this._curLine.push(coords);
-  //  if (!this._drawing) {
-  //    this._drawing = true;
-  //  }
-  //  else {
-  //    this._lines.push(this._curLine);
-  //    this._curLine = [];
-  //    this.checkIntersections();
-  //  }
-  //};
-
-  function inRange(x, start, end) {
-    /* true if x is in the given range, inclusive */
-    return ((x - start) * (x - end) <= 0);
-  }
 
   return Polygons;
 });
