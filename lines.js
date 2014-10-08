@@ -35,29 +35,52 @@ define([], function() {
 
   lines.Line = Line;
 
+  function boundingBoxesIntersect(l1, l2) {
+    /* True if the bounding boxes for the lines intersect */
+    r1 = {
+      left : Math.min(l1.start.x, l1.end.x),
+      right : Math.max(l1.start.x, l1.end.x),
+      top : Math.max(l1.start.y, l1.end.y),
+      bottom : Math.min(l1.start.y, l1.end.y)
+    };
+    r2 = {
+      left : Math.min(l1.start.x, l1.end.x),
+      right : Math.max(l1.start.x, l1.end.x),
+      top : Math.max(l2.start.y, l2.end.y),
+      bottom : Math.min(l2.start.y, l2.end.y)
+    };
+    // They do *not* intersect if the right is left of the left or the
+    // top is under the bottom
+    return !(r2.left > r1.right
+        || r2.right < r1.left
+        || r2.top < r1.bottom
+        || r2.bottom > r1.top);
+  }
 
   lines.intersect = function (l1, l2) {
     /* Return:
      * - `null` if the line segments do not intersect
      * - A point of intersection if the lines do intersect
      */
-    if ((!inRange(l1.start.x, l2.start.x, l2.end.x) ||
-         !inRange(l1.start.y, l2.start.y, l2.end.y)) &&
-        (!inRange(l1.end.x, l2.start.x, l2.end.x) ||
-         !inRange(l1.end.y, l2.start.y, l2.end.y))) {
+
+    if (!boundingBoxesIntersect(l1, l2)) {
       // Bounding boxes do not intersect
+      console.log('Bounding boxes do not intersect');
       return null;
     }
 
     if (l1.slope === l2.slope) {
       if (l1.y_int != l2.y_int) {
         // Parallel lines do not intersect
+        console.log('Parallel lines!');
         return null;
       }
+      console.log('Coincident lines: true');
       // Coincident lines, with intersecting bounding boxes intersect
       // Intersection point is middle of the endpoints TODO
       return true;
     }
+
 
     // If the slopes are not equal, then we can solve for the intersection
     var pt = { x : null, y : null };
@@ -84,8 +107,10 @@ define([], function() {
         inRange(pt.y, l1.start.y, l1.end.y) &&
         inRange(pt.x, l2.start.x, l2.end.x) &&
         inRange(pt.y, l2.start.y, l2.end.y)) {
+      console.log('Intersection in middle of lines');
       return pt;
     }
+    console.log('intersection outside of lines');
     return null;
   };
 

@@ -40,7 +40,7 @@ define(['lines', 'util'], function(lines, util) {
       console.log(pt);
       if (!pt) continue;
       ctx.beginPath();
-      ctx.arc(pt.x, pt.y, 10, 0, 2 * Math.PI, false);
+      ctx.arc(pt.x, pt.y, 2, 0, 2 * Math.PI, false);
       ctx.fillStyle = 'red';
       ctx.fill();
     }
