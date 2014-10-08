@@ -4,7 +4,7 @@ requirejs.config({
   paths : { 'require' : '.' }
 });
 
-requirejs(['polygons'/*, 'intersections'*/], function(Polygons/*, Intersections*/) {
+requirejs(['polygons', 'intersections'], function(Polygons, Intersections) {
   var polygons = new Polygons({ canvas : 'polyCanvas' });
-  //var intersections = new Intersections();
+  var intersections = new Intersections({ canvas: 'lineCanvas' });
 });

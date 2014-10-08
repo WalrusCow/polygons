@@ -6,7 +6,11 @@ define([], function() {
     return ((x - start) * (x - end) <= 0);
   }
 
-  lines.Line = function (p1, p2) {
+  function Line(canvas, p1, p2) {
+    this._canvas = canvas;
+    this._ctx = canvas.getContext('2d');
+    this._strokeColour = 'blue';
+
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
     if (Math.abs(this.slope) === Infinity) {
       // Better to have the same sign on infinities
@@ -18,9 +22,21 @@ define([], function() {
     }
     this.start = p1;
     this.end = p2;
+    this.draw();
   }
+  Line.prototype.draw = function() {
+    var ctx = this._ctx;
+    ctx.beginPath();
+    ctx.moveTo(this.start.x, this.start.y);
+    ctx.lineTo(this.end.x, this.end.y);
+    ctx.strokeStyle = this._strokeColour;
+    ctx.stroke();
+  };
 
-  Lines.intersect = function (l1, l2) {
+  lines.Line = Line;
+
+
+  lines.intersect = function (l1, l2) {
     /* Return:
      * - `null` if the line segments do not intersect
      * - A point of intersection if the lines do intersect
