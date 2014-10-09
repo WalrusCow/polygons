@@ -37,7 +37,6 @@ define(['lines', 'util'], function(lines, util) {
 
     for (var i = 0; i <= lastIdx; ++i) {
       var pt = lines.intersect(newLine, this._lines[i]);
-      console.log(pt);
       if (!pt) continue;
       ctx.beginPath();
       ctx.arc(pt.x, pt.y, 2, 0, 2 * Math.PI, false);

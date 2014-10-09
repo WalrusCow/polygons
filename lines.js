@@ -65,22 +65,25 @@ define([], function() {
 
     if (!boundingBoxesIntersect(l1, l2)) {
       // Bounding boxes do not intersect
-      console.log('Bounding boxes do not intersect');
       return null;
     }
 
     if (l1.slope === l2.slope) {
       if (l1.y_int != l2.y_int) {
         // Parallel lines do not intersect
-        console.log('Parallel lines!');
         return null;
       }
-      console.log('Coincident lines: true');
-      // Coincident lines, with intersecting bounding boxes intersect
-      // Intersection point is middle of the endpoints TODO
-      return true;
-    }
 
+      // Intersection point is one of the middle points. Since there are two
+      // middle points, we only need to sort 3 points.
+      var ptArr = [l1.start, l1.end, l2.start];
+      ptArr.sort(function(a, b) {
+        // We will sort based on the sum of coordinates. Because x, y > 0 and
+        // the lines are coincident, this is an okay sort for the middle
+        return (a.x + a.y) - (b.x + b.y);
+      });
+      return ptArr[1];
+    }
 
     // If the slopes are not equal, then we can solve for the intersection
     var pt = { x : null, y : null };
@@ -107,10 +110,8 @@ define([], function() {
         inRange(pt.y, l1.start.y, l1.end.y) &&
         inRange(pt.x, l2.start.x, l2.end.x) &&
         inRange(pt.y, l2.start.y, l2.end.y)) {
-      console.log('Intersection in middle of lines');
       return pt;
     }
-    console.log('intersection outside of lines');
     return null;
   };
 
