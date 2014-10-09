@@ -1,4 +1,6 @@
-polygons
+Polygons
 ========
 
-Polygons with the canvas
+Draw polygons and lines on a canvas.
+
+Detect line intersections.
