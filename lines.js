@@ -12,7 +12,7 @@ define([], function() {
     this._strokeColour = 'blue';
 
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
-    if (Math.abs(this.slope) === Infinity) {
+    if (isNaN(this.slope) || Math.abs(this.slope) === Infinity) {
       // Better to have the same sign on infinities
       this.slope = Infinity;
     }
@@ -44,8 +44,8 @@ define([], function() {
       bottom : Math.min(l1.start.y, l1.end.y)
     };
     r2 = {
-      left : Math.min(l1.start.x, l1.end.x),
-      right : Math.max(l1.start.x, l1.end.x),
+      left : Math.min(l2.start.x, l2.end.x),
+      right : Math.max(l2.start.x, l2.end.x),
       top : Math.max(l2.start.y, l2.end.y),
       bottom : Math.min(l2.start.y, l2.end.y)
     };
@@ -65,6 +65,7 @@ define([], function() {
 
     if (!boundingBoxesIntersect(l1, l2)) {
       // Bounding boxes do not intersect
+      console.log('bb');
       return null;
     }
 
@@ -92,8 +93,8 @@ define([], function() {
     }
 
     if (l1.slope === Infinity) {
-      pt.x = l2.start.x;
-      pt.y = l2.start.x * l1.slope + l1.y_int;
+      pt.x = l1.start.x;
+      pt.y = l1.start.x * l2.slope + l2.y_int;
     }
     else {
       // So now we have two non-vertical, non-coincident and non-parallel lines
@@ -103,6 +104,12 @@ define([], function() {
       pt.x = (l2.y_int - l1.y_int) / (l1.slope - l2.slope);
       pt.y = l1.slope * pt.x + l1.y_int;
     }
+
+    // Because of floating point errors, if lines intersect on exactly the
+    // endpoints, we might not see that as an intersection
+    pt.x = Math.round(pt.x);
+    pt.y = Math.round(pt.y);
+
     // Now determine if the intersection is in the middle of each of the lines
     // We can do this by saying that the product of subtractions must be
     // negative for x and y
