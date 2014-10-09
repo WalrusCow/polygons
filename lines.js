@@ -65,7 +65,6 @@ define([], function() {
 
     if (!boundingBoxesIntersect(l1, l2)) {
       // Bounding boxes do not intersect
-      console.log('bb');
       return null;
     }
 
