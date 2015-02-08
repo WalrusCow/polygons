@@ -1,8 +1,23 @@
 define([], function() {
   var util = {};
 
-  util.randomNumber = function(min, max) {
+  util.random = {};
+  util.random.number = function(min, max) {
     return Math.floor(min + (Math.random() * (max - min)))
+  };
+
+  util.random.choose = function(num, list) {
+    // Choose at random from the list without replacement
+    var keys = Object.keys(list);
+    var ret = [];
+
+    for (var i = 0; i < num; ++i) {
+      var keysLeft = Object.keys(keys);
+      var idx = util.random.number(0, keysLeft.length);
+      ret.push(list[keys[keysLeft[idx]]]);
+      delete keys[keysLeft[idx]];
+    }
+    return ret;
   };
 
   util.rateLimit = function(func, rate) {
