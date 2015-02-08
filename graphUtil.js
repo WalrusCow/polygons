@@ -10,7 +10,14 @@ define(['util'], function(util) {
       y : canvas.height / 2
     };
 
-    drawConvex(util.randomNumber(10, 20), mid, ctx);
+    var radius = util.randomNumber(100, 150);
+    var polygonSize = util.randomNumber(5, 10);
+    var points = convexPoints(polygonSize, radius, mid);
+
+    for (var i = 0; i < points.length; ++i) {
+      drawNode(points[i], ctx);
+    }
+    drawNode(mid, ctx);
   };
 
   function drawNode(pt, ctx) {
@@ -20,20 +27,18 @@ define(['util'], function(util) {
     ctx.fill();
   }
 
-  function drawConvex(size, mid, ctx) {
-    // Draw a regular convex polyon on the context
-    drawNode(mid, ctx);
-
-    var radius = 100;
-
-    var angle = Math.PI * 2 / size;
-    for (var i = 0; i < size; ++i) {
-      var pt = {
+  function convexPoints(num, radius, mid) {
+    // Return an array of points for a regular convex polygon with
+    // given radius and center
+    var points = [];
+    var angle = Math.PI * 2 / num;
+    for (var i = 0; i < num; ++i) {
+      points.push({
         x : mid.x + (Math.cos(angle * i) * radius),
         y : mid.y + (Math.sin(angle * i) * radius)
-      };
-      drawNode(pt, ctx);
+      });
     }
+    return points;
   }
 
   return GraphUtil;
