@@ -1,9 +1,8 @@
-define(['../util'], function(util) {
+define(['../util', './graph'], function(util, Graph) {
   var GraphUtil = {};
 
   function addRandomEdge(graph) {
     // Add a random edge in the graph that maintains planarity
-
     var TRIES = 10;
     var nodes = graph.nodes;
 
@@ -39,7 +38,7 @@ define(['../util'], function(util) {
     var canvas = document.getElementById(options.canvas);
     var ctx = canvas.getContext('2d');
 
-    //var graph = Graph.planarWheel();
+    //var graph = Graph.wheel(wheelSize);
     var success = false;
     while (success) {
       if (graph.maxDegree < 3) {
@@ -65,21 +64,22 @@ define(['../util'], function(util) {
     };
 
     var radius = util.random.number(100, 150);
-    var polygonSize = util.randomNumber(5, 10);
+    var polygonSize = util.random.number(5, 10);
+
+    var graph = new Graph();
     var points = convexPoints(polygonSize, radius, mid);
-
+    var midId = graph.addNode(mid);
+    var lastId;
     for (var i = 0; i < points.length; ++i) {
-      drawNode(points[i], ctx);
+      var id = graph.addNode(points[i]);
+      if (lastId)
+        graph.addEdge(id, lastId);
+      lastId = id;
+      graph.addEdge(id, midId);
     }
-    drawNode(mid, ctx);
-  };
 
-  function drawNode(pt, ctx) {
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 2, 0, 2 * Math.PI, false);
-    ctx.fillStyle = 'red';
-    ctx.fill();
-  }
+    graph.draw(ctx);
+  };
 
   function convexPoints(num, radius, mid) {
     // Return an array of points for a regular convex polygon with

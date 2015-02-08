@@ -1,8 +1,12 @@
 define([], function() {
-  function Node(id, adj) {
+  function Node(id, point) {
     this.id = id;
-    this.adj = adj
-    this.degree = adj.length;
+    this.coords = point;
+    this.adj = [];
+    this.degree = 0;
+
+    this.radius = 2;
+    this.color = 'red';
   }
 
   Node.prototype.addEdge = function(end) {
@@ -14,24 +18,27 @@ define([], function() {
     this.degree += 1;
   };
 
+  Node.prototype.draw = function(ctx) {
+    ctx.beginPath();
+    ctx.arc(this.coords.x, this.coords.y, this.radius, 0, 2 * Math.PI, false);
+    ctx.fillStyle = this.color;
+    ctx.fill();
+  };
+
   function Graph() {
     // Maintain a list of nodes that each have adjacency lists
     this.nodes = [];
     this.maxDegree = 0;
   }
 
-  Graph.randomWheel = function(size) {
-  }
+  Graph.wheel = function(size) {
+  };
 
-  Graph.prototype.addNode = function(adj) {
+  Graph.prototype.addNode = function(pt) {
+    // New id
     var id = this.nodes.length;
-
-    for (var i = 0; i < adj.length; ++i) {
-      this.nodes[adj[i]].addEdge(id);
-    }
-
-    // Copy the neighbours to avoid ugliness
-    this.nodes.push(new Node(id, adj.slice(0)));
+    this.nodes.push(new Node(id, pt));
+    return id;
   };
 
   Graph.prototype.addEdge = function(u, v) {
@@ -41,6 +48,12 @@ define([], function() {
     v.addEdge(u);
 
     this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
+  };
+
+  Graph.prototype.draw = function(ctx) {
+    for (var i = 0; i < this.nodes.length; ++i) {
+      this.nodes[i].draw(ctx);
+    }
   };
 
   return Graph;
