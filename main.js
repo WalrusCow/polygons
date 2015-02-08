@@ -4,7 +4,9 @@ requirejs.config({
   paths : { 'require' : '.' }
 });
 
-requirejs(['polygons', 'intersections'], function(Polygons, Intersections) {
+requirejs(['polygons', 'intersections', 'graphUtil'],
+          function(Polygons, Intersections, GraphUtil) {
   var polygons = new Polygons({ canvas : 'polyCanvas' });
   var intersections = new Intersections({ canvas: 'lineCanvas' });
+  GraphUtil.generate({ canvas: 'graphCanvas' });
 });

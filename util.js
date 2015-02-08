@@ -1,6 +1,10 @@
 define([], function() {
   var util = {};
 
+  util.randomNumber = function(min, max) {
+    return Math.floor(min + (Math.random() * (max - min)))
+  };
+
   util.rateLimit = function(func, rate) {
     var blocked = false;
     return function() {
