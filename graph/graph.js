@@ -1,4 +1,4 @@
-define(['lines'], function(lines) {
+define(['lines', 'util'], function(lines, util) {
   var Line = lines.Line;
 
   function Node(id, point) {
@@ -74,8 +74,8 @@ define(['lines'], function(lines) {
 
   Graph.prototype.addEdge = function(u, v) {
     // Return true if the edge can be added and keep the embedding planar
-    u = this.nodes[u];
-    v = this.nodes[v];
+    if (!u instanceof Node) u = this.nodes[u];
+    if (!v instanceof Node) v = this.nodes[v];
 
     if (u.neighbours(v)) {
       // Simple graph only
@@ -107,6 +107,79 @@ define(['lines'], function(lines) {
     for (var i = 0; i < this.nodes.length; ++i) {
       this.nodes[i].draw(ctx);
     }
+  };
+
+  Graph.prototype._orderNeighbours = function(node) {
+    // Order the neighbours of node as they appear in CCW direction from the
+    // positive x axis.
+
+    // Map neighbouring IDs to nodes and angles from the node
+    var angles = node.adj.map(function(id) {
+      var to = this.nodes[id].coords;
+      var from = node.coords;
+      // Calculate the angle from node to neighbour
+      var angle = Math.atan2((from.y - to.y), (from.x - to.x));
+      // Save the node with the angle for sorting
+      return { node : this.nodes[id], angle : angle };
+    }, this);
+
+    // Sort according to angle
+    angles.sort(function(a, b) { return a.angle - b.angle; });
+
+    // Finally, discard the angles because we just want nodes
+    return angles.map(function(obj) { obj.node });
+  };
+
+  Graph.prototype.split = function(node, n1, n2) {
+    // Split the given node into two nodes u and v, with u having neighbours
+    // n1 and v having neighbours n2. Return false if the result would not be
+    // planar or a two-element list of the IDs of the new nodes otherwise
+
+    if (!node instanceof Node) {
+      node = this.nodes[node];
+    }
+
+    // We want to remain 3-connected
+    if (n1.length < 2 || n2.length < 2) {
+      return false;
+    }
+
+    var idToNode = (function(id) { return this.nodes[id]; });
+    n1 = n1.map(idToNode, this);
+    n2 = n2.map(idToNode, this);
+
+    // First check if the split is valid
+    var neighbours = this._orderNeighbours(node);
+    // TODO: Now check that n1 and n2 are contiguous in `neighbours`
+
+    // Remove the split node
+    // TODO: Reuse one? Or have a getId() for no holes?
+    delete this.nodes[node.id];
+
+    var coord = function(coord) {
+      return function(node) { return node.coords[coord]; };
+    };
+
+    // Use average coordinates for new points
+    var pt1 = {
+      x : util.average(n1.map(coord('x'))),
+      y : util.average(n1.map(coord('y')))
+    };
+    var pt2 = {
+      x : util.average(n2.map(coord('x'))),
+      y : util.average(n2.map(coord('y')))
+    };
+
+    var u = this.addNode(pt1);
+    var v = this.addNode(pt2);
+    for (var i = 0; i < n1.length; ++i) {
+      this.addEdge(u, n1[i]);
+    }
+    for (var i = 0; i < n2.length; ++i) {
+      this.addEdge(v, n2[i]);
+    }
+
+    return [u.id, v.id];
   };
 
   return Graph;

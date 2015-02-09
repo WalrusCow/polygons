@@ -62,5 +62,10 @@ define([], function() {
     return { x : x, y : y };
   };
 
+  util.average = function(list) {
+    var sum = function(x, y) { return x + y; };
+    return (list.reduce(sum, 0)) / list.length;
+  };
+
   return util;
 });
