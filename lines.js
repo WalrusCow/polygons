@@ -11,6 +11,7 @@ define([], function() {
     if (options.canvas) {
       this.setCanvas(options.canvas);
     }
+    this._strokeColour = 'blue';
 
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
     if (isNaN(this.slope) || Math.abs(this.slope) === Infinity) {
@@ -29,9 +30,11 @@ define([], function() {
   }
 
   Line.prototype.setCanvas = function(canvas) {
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
-    this._strokeColour = 'blue';
+    this.setContext(canvas.getContext('2d'));
+  };
+
+  Line.prototype.setContext = function(context) {
+    this._ctx = context;
   };
 
   Line.prototype.draw = function() {

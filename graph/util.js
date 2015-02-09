@@ -1,4 +1,4 @@
-define(['../util', './graph'], function(util, Graph) {
+define(['util', 'graph/graph'], function(util, Graph) {
   var GraphUtil = {};
 
   function addRandomEdge(graph) {
@@ -64,19 +64,21 @@ define(['../util', './graph'], function(util, Graph) {
     };
 
     var radius = util.random.number(100, 150);
-    var polygonSize = util.random.number(5, 10);
+    var wheelSize = util.random.number(5, 10);
 
     var graph = new Graph();
-    var points = convexPoints(polygonSize, radius, mid);
+    var points = convexPoints(wheelSize, radius, mid);
     var midId = graph.addNode(mid);
     var lastId;
+    var firstId;
+
     for (var i = 0; i < points.length; ++i) {
       var id = graph.addNode(points[i]);
-      if (lastId)
-        graph.addEdge(id, lastId);
+      lastId ? graph.addEdge(id, lastId) : firstId = id;
       lastId = id;
       graph.addEdge(id, midId);
     }
+    graph.addEdge(id, firstId);
 
     graph.draw(ctx);
   };

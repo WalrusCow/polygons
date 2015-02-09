@@ -1,11 +1,13 @@
-define([], function() {
+define(['lines'], function(lines) {
+  var Line = lines.Line;
+
   function Node(id, point) {
     this.id = id;
     this.coords = point;
     this.adj = [];
     this.degree = 0;
 
-    this.radius = 2;
+    this.radius = 3;
     this.color = 'red';
   }
 
@@ -28,14 +30,11 @@ define([], function() {
   function Graph() {
     // Maintain a list of nodes that each have adjacency lists
     this.nodes = [];
+    this.edges = [];
     this.maxDegree = 0;
   }
 
-  Graph.wheel = function(size) {
-  };
-
   Graph.prototype.addNode = function(pt) {
-    // New id
     var id = this.nodes.length;
     this.nodes.push(new Node(id, pt));
     return id;
@@ -47,10 +46,16 @@ define([], function() {
     u.addEdge(v);
     v.addEdge(u);
 
+    this.edges.push(new Line(u.coords, v.coords));
     this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
   };
 
   Graph.prototype.draw = function(ctx) {
+    for (var i = 0; i < this.edges.length; ++i) {
+      this.edges[i].setContext(ctx);
+      this.edges[i].draw();
+    }
+
     for (var i = 0; i < this.nodes.length; ++i) {
       this.nodes[i].draw(ctx);
     }
