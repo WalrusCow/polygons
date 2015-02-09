@@ -6,10 +6,11 @@ define([], function() {
     return ((x - start) * (x - end) <= 0);
   }
 
-  function Line(canvas, p1, p2) {
-    this._canvas = canvas;
-    this._ctx = canvas.getContext('2d');
-    this._strokeColour = 'blue';
+  function Line(p1, p2, options) {
+    options = options || {};
+    if (options.canvas) {
+      this.setCanvas(options.canvas);
+    }
 
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
     if (isNaN(this.slope) || Math.abs(this.slope) === Infinity) {
@@ -22,8 +23,17 @@ define([], function() {
     }
     this.start = p1;
     this.end = p2;
-    this.draw();
+    if (options.draw) {
+      this.draw();
+    }
   }
+
+  Line.prototype.setCanvas = function(canvas) {
+    this._canvas = canvas;
+    this._ctx = canvas.getContext('2d');
+    this._strokeColour = 'blue';
+  };
+
   Line.prototype.draw = function() {
     var ctx = this._ctx;
     ctx.beginPath();

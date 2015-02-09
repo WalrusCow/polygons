@@ -10,6 +10,11 @@ define(['lines', 'util'], function(lines, util) {
     // List of lines we have drawn so far
     this._lines = [];
     this._lineStart = null;
+
+    this._lineOptions = {
+      draw : true,
+      canvas : this._canvas,
+    };
   }
 
   Intersections.prototype.onClick = function (e) {
@@ -21,7 +26,7 @@ define(['lines', 'util'], function(lines, util) {
       this._lineStart = coords;
     }
     else {
-      var newLine = new Line(this._canvas, this._lineStart, coords);
+      var newLine = new Line(this._lineStart, coords, this._lineOptions);
       this._lineStart = null;
       this._lines.push(newLine);
       this.findNewIntersections()
