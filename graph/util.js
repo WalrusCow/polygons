@@ -74,7 +74,8 @@ define(['util', 'graph/graph'], function(util, Graph) {
 
     for (var i = 0; i < points.length; ++i) {
       var id = graph.addNode(points[i]);
-      lastId ? graph.addEdge(id, lastId) : firstId = id;
+      if (lastId) graph.addEdge(id, lastId);
+      else firstId = id;
       lastId = id;
       graph.addEdge(id, midId);
     }
