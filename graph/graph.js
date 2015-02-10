@@ -213,30 +213,38 @@ define(['lines', 'util'], function(lines, util) {
     var coord = function(coord) {
       return function(node) { return node.coords[coord]; };
     };
+    var sum = function(x, y) { return x + y; };
 
     // Use average coordinates for new points
-    // TODO: Average with old point or not?
-    // ... or, even better, solve the system of the two new points!
-    var pt1 = {
-      x : util.average(n1.concat(node).map(coord('x'))),
-      y : util.average(n1.concat(node).map(coord('y')))
-    };
-    var pt2 = {
-      x : util.average(n2.concat(node).map(coord('x'))),
-      y : util.average(n2.concat(node).map(coord('y')))
-    };
+    // (solve the system, since we add (u, v) as an edge)
+    var s1 = n1.map(coord('x')).reduce(sum, 0);
+    var s2 = n2.map(coord('x')).reduce(sum, 0);
+    var c1 = n1.length + 1;
+    var c2 = n2.length + 1;
+
+    var uPt = {};
+    var vPt = {};
+    uPt.x = (s1 + s2/c2) / (c1 - (1/c2));
+    vPt.x = (s2 + uPt.x) / c2;
+
+    s1 = n1.map(coord('y')).reduce(sum, 0);
+    s2 = n2.map(coord('y')).reduce(sum, 0);
+    uPt.y = (s1 + s2/c2) / (c1 - (1/c2));
+    vPt.y = (s2 + uPt.y) / c2;
 
     // Remove the split node
     this.deleteNode(node);
 
-    var u = this.addNode(pt1);
-    var v = this.addNode(pt2);
+    var u = this.addNode(uPt);
+    var v = this.addNode(vPt);
     for (var i = 0; i < n1.length; ++i) {
       this.addEdge(u, n1[i]);
     }
     for (var i = 0; i < n2.length; ++i) {
       this.addEdge(v, n2[i]);
     }
+
+    this.addEdge(u, v);
 
     return [u.id, v.id];
   };
