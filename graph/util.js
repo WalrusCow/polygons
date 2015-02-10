@@ -85,7 +85,7 @@ define(['util', 'graph/graph'], function(util, Graph) {
     var n1 = [];
     var n2 = [];
     for (var i = 1; i < 4; ++i) n1.push(i);
-    for (var i = 4; i < points.length; ++i) n2.push(i);
+    for (var i = 4; i <= points.length; ++i) n2.push(i);
     graph.split(0, n1, n2);
 
     graph.draw(ctx);
