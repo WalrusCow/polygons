@@ -74,8 +74,8 @@ define(['lines', 'util'], function(lines, util) {
 
   Graph.prototype.addEdge = function(u, v) {
     // Return true if the edge can be added and keep the embedding planar
-    if (!u instanceof Node) u = this.nodes[u];
-    if (!v instanceof Node) v = this.nodes[v];
+    if (!(u instanceof Node)) u = this.nodes[u];
+    if (!(v instanceof Node)) v = this.nodes[v];
 
     if (u.neighbours(v)) {
       // Simple graph only
@@ -135,7 +135,7 @@ define(['lines', 'util'], function(lines, util) {
     // n1 and v having neighbours n2. Return false if the result would not be
     // planar or a two-element list of the IDs of the new nodes otherwise
 
-    if (!node instanceof Node) {
+    if (!(node instanceof Node)) {
       node = this.nodes[node];
     }
 
