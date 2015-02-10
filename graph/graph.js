@@ -1,6 +1,46 @@
 define(['lines', 'util'], function(lines, util) {
   var Line = lines.Line;
 
+  function firstFreeIndex(list) {
+    for (var i = 0; i < list.length; ++i) {
+      if (!list[i]) return i;
+    }
+    return i;
+  }
+
+  function pointsEqual(pt1, pt2) {
+    return pt1.x === pt2.x && pt1.y === pt2.y;
+  }
+
+
+  //
+  // Edge class
+  //
+  function Edge(id, u, v) {
+    this.id = id;
+    this.line = new Line(u.coords, v.coords);
+    this.nodes = [u, v];
+  }
+
+  Edge.prototype.otherEnd = function(end) {
+    if (this.nodes[0].id === end.id) return this.nodes[1];
+    if (this.nodes[1].id === end.id) return this.nodes[0];
+    throw new Error("Given node not in this edge");
+  };
+
+  Edge.prototype.intersects = function(edge) {
+    return lines.intersect(this.line, edge.line);
+  };
+
+  Edge.prototype.draw = function(ctx) {
+    this.line.setContext(ctx);
+    this.line.draw();
+  };
+
+
+  //
+  // Node class
+  //
   function Node(id, point) {
     this.id = id;
     this.coords = {
@@ -8,19 +48,25 @@ define(['lines', 'util'], function(lines, util) {
       y : Math.round(point.y)
     };
     this.adj = [];
+    this.edges = [];
     this.degree = 0;
 
     this.radius = 3;
     this.color = 'red';
   }
 
-  Node.prototype.addEdge = function(end) {
-    if (end instanceof Node) {
-      // Support passing nodes as well
-      end = end.id;
-    }
-    this.adj.push(end);
+  Node.prototype.addEdge = function(edge) {
+    this.adj.push(edge.otherEnd(this));
+    this.edges.push(edge);
     this.degree += 1;
+  };
+
+  Node.prototype.deleteEdge = function(edge) {
+    var idx = this.edges.findIndex(function(e) { return e.id === edge.id; });
+    if (idx != -1) {
+      this.edges.splice(idx, 1);
+      this.adj.splice(idx, 1);
+    }
   };
 
   Node.prototype.draw = function(ctx) {
@@ -32,15 +78,16 @@ define(['lines', 'util'], function(lines, util) {
 
   Node.prototype.neighbours = function(node) {
     // Return true if we neighbour the given node
-    if (node instanceof Node) {
-      node = node.id;
-    }
     for (var i = 0; i < this.adj.length; ++i) {
-      if (this.adj[i] == node) return true;
+      if (this.adj[i] === node) return true;
     }
     return false;
   };
 
+
+  //
+  // Graph class
+  //
   function Graph() {
     // Maintain a list of nodes that each have adjacency lists
     this.nodes = [];
@@ -48,20 +95,12 @@ define(['lines', 'util'], function(lines, util) {
     this.maxDegree = 0;
   }
 
-  Graph.prototype.addNode = function(pt) {
-    var id = this.nodes.length;
-    this.nodes.push(new Node(id, pt));
-    return id;
-  };
-
-  function pointsEqual(pt1, pt2) {
-    return pt1.x == pt2.x && pt1.y == pt2.y;
-  }
-
-  Graph.prototype.intersects = function(line) {
+  Graph.prototype.crosses = function(edge) {
     // Return true if the line intersects any edge
     for (var i = 0; i < this.edges.length; ++i) {
-      var pt = lines.intersect(line, this.edges[i]);
+      if (!this.edges[i]) continue;
+      var pt = edge.intersects(this.edges[i]);
+      var line = edge.line;
       // No intersection or it was at an endpoint (i.e. in the node)
       if (!pt || pointsEqual(pt, line.start) || pointsEqual(pt, line.end)) {
         continue;
@@ -70,6 +109,25 @@ define(['lines', 'util'], function(lines, util) {
     }
     // No intersections
     return false;
+  };
+
+  Graph.prototype.deleteNode = function(node) {
+    // Delete a node and all its edges
+    if (!(node instanceof Node)) node = this.nodes[node];
+    var id = node.id;
+    for (var i = 0; i < node.edges.length; ++i) {
+      // Remove edges from other end
+      var edge = node.edges[i];
+      node.adj[i].deleteEdge(edge);
+      delete this.edges[edge.id];
+    }
+    delete this.nodes[id];
+  };
+
+  Graph.prototype.addNode = function(pt) {
+    var id = firstFreeIndex(this.nodes);
+    this.nodes[id] = new Node(id, pt);
+    return id;
   };
 
   Graph.prototype.addEdge = function(u, v) {
@@ -82,30 +140,30 @@ define(['lines', 'util'], function(lines, util) {
       return false;
     }
 
-    var line = new Line(u.coords, v.coords);
+    var id = firstFreeIndex(this.edges);
+    var edge = new Edge(id, u, v);
     // Determine if this edge causes an intersection with any existing edges
-    if (this.intersects(line)) {
+    if (this.crosses(edge)) {
       // Adding this edge would make this embedding non-planar
       return false;
     }
 
     // Not a directed graph
-    u.addEdge(v);
-    v.addEdge(u);
+    u.addEdge(edge);
+    v.addEdge(edge);
 
-    this.edges.push(line);
+    this.edges[id] = edge;
     this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
     return true;
   };
 
   Graph.prototype.draw = function(ctx) {
     for (var i = 0; i < this.edges.length; ++i) {
-      this.edges[i].setContext(ctx);
-      this.edges[i].draw();
+      if (this.edges[i]) this.edges[i].draw(ctx);
     }
 
     for (var i = 0; i < this.nodes.length; ++i) {
-      this.nodes[i].draw(ctx);
+      if (this.nodes[i]) this.nodes[i].draw(ctx);
     }
   };
 
@@ -114,13 +172,13 @@ define(['lines', 'util'], function(lines, util) {
     // positive x axis.
 
     // Map neighbouring IDs to nodes and angles from the node
-    var angles = node.adj.map(function(id) {
-      var to = this.nodes[id].coords;
+    var angles = node.adj.map(function(neighbour) {
+      var to = neighbour.coords;
       var from = node.coords;
       // Calculate the angle from node to neighbour
       var angle = Math.atan2((from.y - to.y), (from.x - to.x));
       // Save the node with the angle for sorting
-      return { node : this.nodes[id], angle : angle };
+      return { node : neighbour, angle : angle };
     }, this);
 
     // Sort according to angle
@@ -152,23 +210,24 @@ define(['lines', 'util'], function(lines, util) {
     var neighbours = this._orderNeighbours(node);
     // TODO: Now check that n1 and n2 are contiguous in `neighbours`
 
-    // Remove the split node
-    // TODO: Reuse one? Or have a getId() for no holes?
-    delete this.nodes[node.id];
-
     var coord = function(coord) {
       return function(node) { return node.coords[coord]; };
     };
 
     // Use average coordinates for new points
+    // TODO: Average with old point or not?
+    // ... or, even better, solve the system of the two new points!
     var pt1 = {
-      x : util.average(n1.map(coord('x'))),
-      y : util.average(n1.map(coord('y')))
+      x : util.average(n1.concat(node).map(coord('x'))),
+      y : util.average(n1.concat(node).map(coord('y')))
     };
     var pt2 = {
-      x : util.average(n2.map(coord('x'))),
-      y : util.average(n2.map(coord('y')))
+      x : util.average(n2.concat(node).map(coord('x'))),
+      y : util.average(n2.concat(node).map(coord('y')))
     };
+
+    // Remove the split node
+    this.deleteNode(node);
 
     var u = this.addNode(pt1);
     var v = this.addNode(pt2);

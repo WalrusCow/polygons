@@ -65,6 +65,8 @@ define(['util', 'graph/graph'], function(util, Graph) {
 
     var radius = util.random.number(100, 150);
     var wheelSize = util.random.number(5, 10);
+    radius = 125;
+    wheelSize = 6;
 
     var graph = new Graph();
     var points = convexPoints(wheelSize, radius, mid);
@@ -80,6 +82,8 @@ define(['util', 'graph/graph'], function(util, Graph) {
       graph.addEdge(id, midId);
     }
     graph.addEdge(id, firstId);
+
+    graph.split(0, [1, 2, 3], [4, 5, 6]);
 
     graph.draw(ctx);
   };
