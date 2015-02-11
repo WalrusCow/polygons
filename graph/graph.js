@@ -47,7 +47,7 @@ define(['lines', 'util'], function(lines, util) {
       x : Math.round(point.x),
       y : Math.round(point.y)
     };
-    this.adj = [];
+    this.neighbours = [];
     this.edges = [];
     this.degree = 0;
 
@@ -56,17 +56,22 @@ define(['lines', 'util'], function(lines, util) {
   }
 
   Node.prototype.addEdge = function(edge) {
-    this.adj.push(edge.otherEnd(this));
+    this.neighbours.push(edge.otherEnd(this));
     this.edges.push(edge);
     this.degree += 1;
   };
 
   Node.prototype.deleteEdge = function(edge) {
-    var idx = this.edges.findIndex(function(e) { return e.id === edge.id; });
+    for (var idx = 0; idx < this.edges.length; ++idx) {
+      if (this.edges[idx].id == edge.id) {
+        break;
+      }
+    }
     if (idx != -1) {
       this.edges.splice(idx, 1);
-      this.adj.splice(idx, 1);
+      this.neighbours.splice(idx, 1);
     }
+    this.degree -= 1;
   };
 
   Node.prototype.draw = function(ctx) {
@@ -76,10 +81,10 @@ define(['lines', 'util'], function(lines, util) {
     ctx.fill();
   };
 
-  Node.prototype.neighbours = function(node) {
+  Node.prototype.adjacentTo = function(node) {
     // Return true if we neighbour the given node
-    for (var i = 0; i < this.adj.length; ++i) {
-      if (this.adj[i] === node) return true;
+    for (var i = 0; i < this.neighbours.length; ++i) {
+      if (this.neighbours[i] === node) return true;
     }
     return false;
   };
@@ -118,7 +123,7 @@ define(['lines', 'util'], function(lines, util) {
     for (var i = 0; i < node.edges.length; ++i) {
       // Remove edges from other end
       var edge = node.edges[i];
-      node.adj[i].deleteEdge(edge);
+      node.neighbours[i].deleteEdge(edge);
       delete this.edges[edge.id];
     }
     delete this.nodes[id];
@@ -135,7 +140,7 @@ define(['lines', 'util'], function(lines, util) {
     if (!(u instanceof Node)) u = this.nodes[u];
     if (!(v instanceof Node)) v = this.nodes[v];
 
-    if (u.neighbours(v)) {
+    if (u.adjacentTo(v)) {
       // Simple graph only
       return false;
     }
@@ -167,25 +172,28 @@ define(['lines', 'util'], function(lines, util) {
     }
   };
 
-  Graph.prototype._orderNeighbours = function(node) {
-    // Order the neighbours of node as they appear in CCW direction from the
-    // positive x axis.
+  Graph._radialOrder = function(nodes, point) {
+    // Order the nodes around the point in CCW from positive x axis direction
 
     // Map neighbouring IDs to nodes and angles from the node
-    var angles = node.adj.map(function(neighbour) {
-      var to = neighbour.coords;
-      var from = node.coords;
+    var angles = nodes.map(function(node) {
+      var to = node.coords;
+      var from = point;
       // Calculate the angle from node to neighbour
       var angle = Math.atan2((from.y - to.y), (from.x - to.x));
       // Save the node with the angle for sorting
-      return { node : neighbour, angle : angle };
+      return { node : node, angle : angle };
     }, this);
 
     // Sort according to angle
     angles.sort(function(a, b) { return a.angle - b.angle; });
 
     // Finally, discard the angles because we just want nodes
-    return angles.map(function(obj) { obj.node });
+    return angles.map(function(obj) { return obj.node; });
+  };
+
+  Graph.prototype.radialOrderNeighbours = function(node) {
+    return Graph._radialOrder(node.neighbours, node.coords);
   };
 
   Graph.prototype.split = function(node, n1, n2) {
@@ -197,17 +205,25 @@ define(['lines', 'util'], function(lines, util) {
       node = this.nodes[node];
     }
 
-    // We want to remain 3-connected
-    if (n1.length < 2 || n2.length < 2) {
+    if (node.neighbours.length != (n1.length + n2.length)) {
+      console.log('Not all neighbours included in split');
       return false;
     }
 
-    var idToNode = (function(id) { return this.nodes[id]; });
-    n1 = n1.map(idToNode, this);
-    n2 = n2.map(idToNode, this);
+    // We want to remain 3-connected
+    if (n1.length < 2 || n2.length < 2) {
+      console.log('Each split set must have at least 2 vertices');
+      return false;
+    }
+
+    if (!(n1[0] instanceof Node)) {
+      var idToNode = (function(id) { return this.nodes[id]; });
+      n1 = n1.map(idToNode, this);
+      n2 = n2.map(idToNode, this);
+    }
 
     // First check if the split is valid
-    var neighbours = this._orderNeighbours(node);
+    var neighbours = this.radialOrderNeighbours(node);
     // TODO: Now check that n1 and n2 are contiguous in `neighbours`
 
     var coord = function(coord) {
@@ -217,6 +233,8 @@ define(['lines', 'util'], function(lines, util) {
 
     // Use average coordinates for new points
     // (solve the system, since we add (u, v) as an edge)
+    // TODO: Generalize to an n-dimensional matrix case for the complete
+    // barycentric embedding of a graph
     var s1 = n1.map(coord('x')).reduce(sum, 0);
     var s2 = n2.map(coord('x')).reduce(sum, 0);
     var c1 = n1.length + 1;

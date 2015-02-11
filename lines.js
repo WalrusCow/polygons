@@ -101,7 +101,9 @@ define([], function() {
     // If the slopes are not equal, then we can solve for the intersection
     var pt = { x : null, y : null };
     if (l2.slope === Infinity) {
-      [l1, l2] = [l2, l1];
+      var tmp = l1;
+      l1 = l2;
+      l2 = tmp;
     }
 
     if (l1.slope === Infinity) {
