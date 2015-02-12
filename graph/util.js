@@ -1,42 +1,6 @@
 define(['util', 'graph/graph'], function(util, Graph) {
   var GraphUtil = {};
 
-  function addRandomEdge(graph) {
-    // Add a random edge in the graph that maintains planarity
-    var TRIES = 10;
-    var nodes = graph.nodes;
-
-    for (var i = 0; i < TRIES; ++i) {
-      var choices = util.random.choose(2, nodes);
-      var u = choices[0];
-      var v = choices[1];
-      if (graph.addEdge(u, v)) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  function generateWheel(size, midPoint, radius) {
-    var graph = new Graph();
-    var points = convexPoints(size, midPoint, radius);
-    var midId = graph.addNode(midPoint);
-    var lastId;
-    var firstId;
-
-    for (var i = 0; i < points.length; ++i) {
-      var id = graph.addNode(points[i]);
-      if (lastId) graph.addEdge(id, lastId);
-      else firstId = id;
-      lastId = id;
-      graph.addEdge(id, midId);
-    }
-    graph.addEdge(id, firstId);
-
-    return graph;
-  }
-
   GraphUtil.generate = function(options) {
     // I imagine something like this:
     // First, generate a random planar wheel embedding
@@ -154,6 +118,42 @@ define(['util', 'graph/graph'], function(util, Graph) {
       });
     }
     return points;
+  }
+
+  function addRandomEdge(graph) {
+    // Add a random edge in the graph that maintains planarity
+    var TRIES = 10;
+    var nodes = graph.nodes;
+
+    for (var i = 0; i < TRIES; ++i) {
+      var choices = util.random.choose(2, nodes);
+      var u = choices[0];
+      var v = choices[1];
+      if (graph.addEdge(u, v)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
+
+  function generateWheel(size, midPoint, radius) {
+    var graph = new Graph();
+    var points = convexPoints(size, midPoint, radius);
+    var midId = graph.addNode(midPoint);
+    var lastId;
+    var firstId;
+
+    for (var i = 0; i < points.length; ++i) {
+      var id = graph.addNode(points[i]);
+      if (lastId) graph.addEdge(id, lastId);
+      else firstId = id;
+      lastId = id;
+      graph.addEdge(id, midId);
+    }
+    graph.addEdge(id, firstId);
+
+    return graph;
   }
 
   return GraphUtil;
