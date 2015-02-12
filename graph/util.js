@@ -27,12 +27,11 @@ define(['util', 'graph/graph'], function(util, Graph) {
 
     var graph = generateWheel(wheelSize, mid, radius);
 
-    var success = true;
-    for (var action = 0; action < 3; ++action) {
+    for (var action = 0; action < 5; ++action) {
       if (graph.maxDegree < 4) {
         // No choice but to add an edge
         console.log("No node to split");
-        success = addRandomEdge(graph);
+        addRandomEdge(graph);
         continue;
       }
 
@@ -40,11 +39,11 @@ define(['util', 'graph/graph'], function(util, Graph) {
 
       if (split) {
         console.log("Splitting a random node");
-        success = splitRandomNode(graph);
+        splitRandomNode(graph);
       }
       else {
         console.log("Adding a random edge");
-        success = addRandomEdge(graph);
+        addRandomEdge(graph);
       }
 
     }
@@ -56,12 +55,10 @@ define(['util', 'graph/graph'], function(util, Graph) {
     // Return true if a, b are "neighbours" in list, if list was circular
     var i = list.indexOf(a);
     var j = list.indexOf(b);
-    var tmp = Math.max(i, j);
-    j = Math.min(i, j);
-    i = tmp;
-    if (i - j <= 1) return true;
-    // True if the two elements are the ends of the lists
-    return (i === (list.length - 1) && j === 0);
+    if (Math.abs(i - j) <= 1) return true;
+    // At least one is zero and they are cumulatively the total elements
+    // (at least one is the list.length)
+    return (!i || !j) && (i + j === list.length - 1);
   }
 
   function splitRandomNode(graph) {

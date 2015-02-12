@@ -254,6 +254,9 @@ define(['lines', 'util'], function(lines, util) {
 
     var u = this.addNode(uPt);
     var v = this.addNode(vPt);
+    // TODO: These adds can fail sometimes =\
+    // Probably need to do this properly (i.e. finding a 3-sep, etc) for this
+    // to actually work. That is, not give points to nodes until the end
     n1.forEach(function(n) {
       this.addEdge(u, n);
     }, this);
