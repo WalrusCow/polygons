@@ -15,7 +15,6 @@ define(['util', 'graph/graph'], function(util, Graph) {
     // To add an edge, simply add one and check for intersections
     // We can retry this some number of times before giving up
     var canvas = document.getElementById(options.canvas);
-    canvas.addEventListener('click', this.generate.bind(this, options));
     var ctx = canvas.getContext('2d');
 
     var mid = {
@@ -28,12 +27,11 @@ define(['util', 'graph/graph'], function(util, Graph) {
 
     var graph = generateWheel(wheelSize, mid, radius);
 
-    splitRandomNode(graph);
-
-    var success = false;
-    while (success) {
-      if (graph.maxDegree < 3) {
+    var success = true;
+    for (var action = 0; action < 3; ++action) {
+      if (graph.maxDegree < 4) {
         // No choice but to add an edge
+        console.log("No node to split");
         success = addRandomEdge(graph);
         continue;
       }
@@ -41,9 +39,11 @@ define(['util', 'graph/graph'], function(util, Graph) {
       var split = Math.random() < 0.5;
 
       if (split) {
+        console.log("Splitting a random node");
         success = splitRandomNode(graph);
       }
       else {
+        console.log("Adding a random edge");
         success = addRandomEdge(graph);
       }
 
@@ -67,11 +67,10 @@ define(['util', 'graph/graph'], function(util, Graph) {
   function splitRandomNode(graph) {
     // Choose a node at random to split
     var choices = [];
-    for (var i = 0; i < graph.nodes.length; ++i) {
-      if (graph.nodes[i].degree >= 4) {
-        choices.push(graph.nodes[i]);
-      }
-    }
+    graph.nodes.forEach(function(node) {
+      if (node.degree >= 4) choices.push(node);
+    });
+    if (choices.length === 0) return false;
     var node = util.random.choose(1, choices)[0];
 
     // Sorted
@@ -89,10 +88,7 @@ define(['util', 'graph/graph'], function(util, Graph) {
     // v1 is in one and v2 is in the other
     var n1 = [];
     var n2 = [];
-    for (var i = 0; i < neighbours.length; ++i) {
-      var neighbour = neighbours[i];
-      if (!neighbour) continue;
-
+    neighbours.forEach(function(neighbour) {
       n1.push(neighbour);
       // Swap which array we are pushing to on each discovery of a boundary
       if (neighbour === v1 || neighbour === v2) {
@@ -100,7 +96,7 @@ define(['util', 'graph/graph'], function(util, Graph) {
         n1 = n2;
         n2 = tmp;
       }
-    }
+    });
 
     // Split it now!
     graph.split(node, n1, n2);
@@ -130,10 +126,12 @@ define(['util', 'graph/graph'], function(util, Graph) {
       var u = choices[0];
       var v = choices[1];
       if (graph.addEdge(u, v)) {
+        console.log("Adding random edge on attempt " + i);
         return true;
       }
     }
 
+    console.log("Failed to add random edge");
     return false;
   }
 

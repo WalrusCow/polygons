@@ -12,7 +12,6 @@ define(['lines', 'util'], function(lines, util) {
     return pt1.x === pt2.x && pt1.y === pt2.y;
   }
 
-
   //
   // Edge class
   //
@@ -62,15 +61,12 @@ define(['lines', 'util'], function(lines, util) {
   };
 
   Node.prototype.deleteEdge = function(edge) {
-    for (var idx = 0; idx < this.edges.length; ++idx) {
-      if (this.edges[idx].id == edge.id) {
-        break;
-      }
-    }
-    if (idx != -1) {
-      this.edges.splice(idx, 1);
-      this.neighbours.splice(idx, 1);
-    }
+    this.edges = this.edges.filter(function(e) {
+      return e.id !== edge.id;
+    });
+    this.neighbours = this.neighbours.filter(function(n) {
+      return edge.otherEnd(this) !== n;
+    }, this);
     this.degree -= 1;
   };
 
@@ -83,10 +79,7 @@ define(['lines', 'util'], function(lines, util) {
 
   Node.prototype.adjacentTo = function(node) {
     // Return true if we neighbour the given node
-    for (var i = 0; i < this.neighbours.length; ++i) {
-      if (this.neighbours[i] === node) return true;
-    }
-    return false;
+    return this.neighbours.indexOf(node) !== -1;
   };
 
 
@@ -102,31 +95,39 @@ define(['lines', 'util'], function(lines, util) {
 
   Graph.prototype.crosses = function(edge) {
     // Return true if the line intersects any edge
-    for (var i = 0; i < this.edges.length; ++i) {
-      if (!this.edges[i]) continue;
-      var pt = edge.intersects(this.edges[i]);
+    var crosses = false;
+    return this.edges.some(function(e) {
+      var pt = edge.intersects(e);
       var line = edge.line;
-      // No intersection or it was at an endpoint (i.e. in the node)
-      if (!pt || pointsEqual(pt, line.start) || pointsEqual(pt, line.end)) {
-        continue;
-      }
-      return true;
-    }
-    // No intersections
-    return false;
+      // Endpoint intersections don't count as crossing
+      return pt && !pointsEqual(pt, line.start) && !pointsEqual(pt, line.end)
+    });
   };
 
   Graph.prototype.deleteNode = function(node) {
     // Delete a node and all its edges
     if (!(node instanceof Node)) node = this.nodes[node];
-    var id = node.id;
-    for (var i = 0; i < node.edges.length; ++i) {
-      // Remove edges from other end
-      var edge = node.edges[i];
-      node.neighbours[i].deleteEdge(edge);
+
+    // We have to find the new max degree
+    this.maxDegree = 0;
+    this.nodes.forEach(function(n) {
+      if (n === node) return;
+      if (n.degree > this.maxDegree) this.maxDegree = n.degree;
+    }, this);
+
+    // Find new min degree
+    this.minDegree = Infinity;
+    this.nodes.forEach(function(n) {
+      if (n === node) return;
+      if (n.degree < this.minDegree) this.minDegree = n.degree;
+    }, this);
+
+    node.edges.forEach(function(edge, idx) {
+      // Remove the edges from the other ends
+      node.neighbours[idx].deleteEdge(edge);
       delete this.edges[edge.id];
-    }
-    delete this.nodes[id];
+    }, this);
+    delete this.nodes[node.id];
   };
 
   Graph.prototype.addNode = function(pt) {
@@ -163,13 +164,11 @@ define(['lines', 'util'], function(lines, util) {
   };
 
   Graph.prototype.draw = function(ctx) {
-    for (var i = 0; i < this.edges.length; ++i) {
-      if (this.edges[i]) this.edges[i].draw(ctx);
+    function draw(elem) {
+      elem.draw(ctx);
     }
-
-    for (var i = 0; i < this.nodes.length; ++i) {
-      if (this.nodes[i]) this.nodes[i].draw(ctx);
-    }
+    this.edges.forEach(draw);
+    this.nodes.forEach(draw);
   };
 
   Graph._radialOrder = function(nodes, point) {
@@ -255,12 +254,12 @@ define(['lines', 'util'], function(lines, util) {
 
     var u = this.addNode(uPt);
     var v = this.addNode(vPt);
-    for (var i = 0; i < n1.length; ++i) {
-      this.addEdge(u, n1[i]);
-    }
-    for (var i = 0; i < n2.length; ++i) {
-      this.addEdge(v, n2[i]);
-    }
+    n1.forEach(function(n) {
+      this.addEdge(u, n);
+    }, this);
+    n2.forEach(function(n) {
+      this.addEdge(v, n);
+    }, this);
 
     this.addEdge(u, v);
 
