@@ -1,4 +1,5 @@
-define(['lines', 'util'], function(lines, util) {
+define(['lines', 'util', 'graph/node', 'graph/edge'],
+       function(lines, util, Node, Edge) {
   var Line = lines.Line;
 
   function firstFreeIndex(list) {
@@ -11,77 +12,6 @@ define(['lines', 'util'], function(lines, util) {
   function pointsEqual(pt1, pt2) {
     return pt1.x === pt2.x && pt1.y === pt2.y;
   }
-
-  //
-  // Edge class
-  //
-  function Edge(id, u, v) {
-    this.id = id;
-    this.line = new Line(u.coords, v.coords);
-    this.nodes = [u, v];
-  }
-
-  Edge.prototype.otherEnd = function(end) {
-    if (this.nodes[0].id === end.id) return this.nodes[1];
-    if (this.nodes[1].id === end.id) return this.nodes[0];
-    throw new Error("Given node not in this edge");
-  };
-
-  Edge.prototype.intersects = function(edge) {
-    return lines.intersect(this.line, edge.line);
-  };
-
-  Edge.prototype.draw = function(ctx) {
-    this.line.setContext(ctx);
-    this.line.draw();
-  };
-
-
-  //
-  // Node class
-  //
-  function Node(id, point) {
-    this.id = id;
-    this.coords = {
-      x : Math.round(point.x),
-      y : Math.round(point.y)
-    };
-    this.neighbours = [];
-    this.edges = [];
-    this.degree = 0;
-
-    this.radius = 3;
-    this.color = 'red';
-  }
-
-  Node.prototype.addEdge = function(edge) {
-    this.neighbours.push(edge.otherEnd(this));
-    this.edges.push(edge);
-    this.degree += 1;
-  };
-
-  Node.prototype.deleteEdge = function(edge) {
-    this.edges = this.edges.filter(function(e) {
-      return e.id !== edge.id;
-    });
-    this.neighbours = this.neighbours.filter(function(n) {
-      return edge.otherEnd(this) !== n;
-    }, this);
-    this.degree -= 1;
-  };
-
-  Node.prototype.draw = function(ctx) {
-    ctx.beginPath();
-    ctx.arc(this.coords.x, this.coords.y, this.radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle = this.color;
-    ctx.fill();
-  };
-
-  Node.prototype.adjacentTo = function(node) {
-    // Return true if we neighbour the given node
-    return this.neighbours.indexOf(node) !== -1;
-  };
-
 
   //
   // Graph class
