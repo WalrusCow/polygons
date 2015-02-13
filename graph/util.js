@@ -135,18 +135,19 @@ define(['util', 'graph/graph'], function(util, Graph) {
   function generateWheel(size, midPoint, radius) {
     var graph = new Graph();
     var points = convexPoints(size, midPoint, radius);
-    var midId = graph.addNode(midPoint);
-    var lastId;
-    var firstId;
+    var midNode = graph.addNode(midPoint);
+    var lastNode;
+    var firstNode;
 
     for (var i = 0; i < points.length; ++i) {
-      var id = graph.addNode(points[i]);
-      if (lastId) graph.addEdge(id, lastId);
-      else firstId = id;
-      lastId = id;
-      graph.addEdge(id, midId);
+      var node = graph.addNode(points[i]);
+      node.fixed = true;
+      if (lastNode) graph.addEdge(node, lastNode);
+      else firstNode = node;
+      lastNode = node;
+      graph.addEdge(node, midNode);
     }
-    graph.addEdge(id, firstId);
+    graph.addEdge(node, firstNode);
 
     return graph;
   }

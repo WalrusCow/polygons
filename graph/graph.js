@@ -63,7 +63,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
   Graph.prototype.addNode = function(pt) {
     var id = firstFreeIndex(this.nodes);
     this.nodes[id] = new Node(id, pt);
-    return id;
+    return this.nodes[id];
   };
 
   Graph.prototype.addEdge = function(u, v) {
@@ -164,20 +164,29 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
     // (solve the system, since we add (u, v) as an edge)
     // TODO: Generalize to an n-dimensional matrix case for the complete
     // barycentric embedding of a graph
-    var s1 = n1.map(coord('x')).reduce(sum, 0);
-    var s2 = n2.map(coord('x')).reduce(sum, 0);
-    var c1 = n1.length + 1;
-    var c2 = n2.length + 1;
-
     var uPt = {};
     var vPt = {};
-    uPt.x = (s1 + s2/c2) / (c1 - (1/c2));
-    vPt.x = (s2 + uPt.x) / c2;
+    if (node.fixed) {
+      uPt.x = node.coords.x;
+      uPt.y = node.coords.y;
 
-    s1 = n1.map(coord('y')).reduce(sum, 0);
-    s2 = n2.map(coord('y')).reduce(sum, 0);
-    uPt.y = (s1 + s2/c2) / (c1 - (1/c2));
-    vPt.y = (s2 + uPt.y) / c2;
+      vPt.x = ((n2.map(coord('x')).reduce(sum, 0)) + uPt.x) / (n2.length + 1);
+      vPt.y = ((n2.map(coord('y')).reduce(sum, 0)) + uPt.y) / (n2.length + 1);
+    }
+    else {
+      var s1 = n1.map(coord('x')).reduce(sum, 0);
+      var s2 = n2.map(coord('x')).reduce(sum, 0);
+      var c1 = n1.length + 1;
+      var c2 = n2.length + 1;
+
+      uPt.x = (s1 + s2/c2) / (c1 - (1/c2));
+      vPt.x = (s2 + uPt.x) / c2;
+
+      s1 = n1.map(coord('y')).reduce(sum, 0);
+      s2 = n2.map(coord('y')).reduce(sum, 0);
+      uPt.y = (s1 + s2/c2) / (c1 - (1/c2));
+      vPt.y = (s2 + uPt.y) / c2;
+    }
 
     // Remove the split node
     this.deleteNode(node);
