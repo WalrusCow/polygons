@@ -25,12 +25,6 @@ define([], function() {
     });
     this.augmented = true;
 
-    // We may end up swapping rows around, so keep a map of what rows are where
-    this.rowMap = [];
-    for (var i = 0; i < this.rows.length; ++i) {
-      this.rowMap.push(i);
-    }
-
     // Now row-reduce the augmented matrix using some basic strategy
     for (var i = 0; i < this.rows.length; ++i) {
       // Unable to create a 1 in this column
@@ -40,7 +34,7 @@ define([], function() {
     var ans = [];
     for (var i = 0; i < this.rows.length; ++i) {
       // Put the answer into the correct return slot
-      ans[this.rowMap[i]] = this.rows[i].pop();
+      ans.push(this.rows[i].pop());
     }
     return ans;
   };
@@ -50,8 +44,7 @@ define([], function() {
     if (this.rows[n][n] === 0) {
       // We have a zero in the spot we are supposed to be using to reduce
       // Find a new row, or return false if no such row exists
-      var newRow = n;
-      for (var newRow = n; newRow < this.rows.length; ++newRow) {
+      for (var newRow = n + 1; newRow < this.rows.length; ++newRow) {
         // Found one
         if (this.rows[newRow][newRow] !== 0) break;
       }
@@ -59,15 +52,9 @@ define([], function() {
       if (newRow === this.rows.length) return false;
 
       // Swap the rows
-      var tmp = this.rowMap[newRow];
-      this.rowMap[newRow] = this.rows[n];
-      this.rowMap[n] = tmp;
-
       tmp = this.rows[n];
       this.rows[n] = this.rows[newRow];
       this.rows[newRow] = tmp;
-
-      n = newRow;
     }
 
     this.multiplyRow(this.rows[n], 1 / this.rows[n][n]);
