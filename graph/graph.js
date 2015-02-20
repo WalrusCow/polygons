@@ -1,5 +1,5 @@
-define(['lines', 'util', 'graph/node', 'graph/edge'],
-       function(lines, util, Node, Edge) {
+define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
+       function(lines, util, Node, Edge, graphUtil) {
   var Line = lines.Line;
 
   function firstFreeIndex(list) {
@@ -16,11 +16,15 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
   //
   // Graph class
   //
-  function Graph() {
+  function Graph(midPoint, radius) {
     // Maintain a list of nodes that each have adjacency lists
     this.nodes = [];
     this.edges = [];
     this.maxDegree = 0;
+
+    // Mid and radius to use for outer facek
+    this.midPoint = midPoint;
+    this.radius = radius;
   }
 
   Graph.prototype.crosses = function(edge) {
@@ -66,7 +70,52 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
     return this.nodes[id];
   };
 
-  Graph.prototype.addEdge = function(u, v) {
+  Graph.prototype.setOuterFace = function(nodes) {
+    // Set the outer face of the graph. Nodes should be ordered such that
+    // nodes[n] is adjacent to nodes[n-1] and nodes[n+1].
+    this.outerFace = nodes;
+  };
+
+  Graph.prototype.makeBarycentric = function(nodes) {
+    // Modify the graph to have a barycentric embedding using the outer
+    // face as the fixed face.
+
+    this.nodes.forEach(function(node) { node.fixed = false; });
+
+    var pts = graphUtil.convexPoints(nodes.length, this.midPoint, this.radius);
+    for (var i = 0; i < nodes.length; ++i) {
+      nodes[i].coords = pts[i];
+      nodes[i].fixed = true;
+    }
+
+    // Now compute the average
+  };
+
+  Graph.prototype.cutOuterFace = function(uIdx, vIdx) {
+    // Cut out a section between uIdx and vIdx in the outer face
+    // e.g.  [u, 1, 2, v, 3, 4, 5] -> [u, v, 3, 4, 5]
+    var newFace = [];
+    var low = Math.min(uIdx, vIdx);
+    var high = Math.max(uIdx, vIdx);
+
+    // Determine if we should start at u or v index
+    if ((high - low) > (this.outerFace.length - (high - low))) {
+      var startIdx = high;
+    } else {
+      var startIdx = low;
+    }
+
+    // Start at one node and skip straight to the other
+    newFace.push(this.outerFace[startIdx]);
+    var i = (uIdx == startIdx) ? vIdx : uIdx;
+    // Now go around the face until we reach the first node
+    for (; i !== startIdx; i = (i + 1) % this.outerFace.length) {
+      newFace.push(this.outerFace[i]);
+    }
+    this.outerFace = newFace;
+  };
+
+  Graph.prototype.addEdge = function(u, v, skipCheck) {
     // Return true if the edge can be added and keep the embedding planar
     if (!(u instanceof Node)) u = this.nodes[u];
     if (!(v instanceof Node)) v = this.nodes[v];
@@ -76,12 +125,23 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
       return false;
     }
 
+    // TODO: Create a barycentric embedding then look
+    // for crossing lines.
+
     var id = firstFreeIndex(this.edges);
     var edge = new Edge(id, u, v);
     // Determine if this edge causes an intersection with any existing edges
-    if (this.crosses(edge)) {
+    if (!skipCheck && this.crosses(edge)) {
       // Adding this edge would make this embedding non-planar
       return false;
+    }
+
+    if (this.outerFace) {
+      var uIdx = this.outerFace.indexOf(u);
+      var vIdx = this.outerFace.indexOf(v);
+      if (uIdx !== -1 && vIdx !== -1) {
+        this.cutOuterFace(uIdx, vIdx);
+      }
     }
 
     // Not a directed graph
@@ -197,13 +257,13 @@ define(['lines', 'util', 'graph/node', 'graph/edge'],
     // Probably need to do this properly (i.e. finding a 3-sep, etc) for this
     // to actually work. That is, not give points to nodes until the end
     n1.forEach(function(n) {
-      this.addEdge(u, n);
+      this.addEdge(u, n, true);
     }, this);
     n2.forEach(function(n) {
-      this.addEdge(v, n);
+      this.addEdge(v, n, true);
     }, this);
 
-    this.addEdge(u, v);
+    this.addEdge(u, v, true);
 
     return [u.id, v.id];
   };
