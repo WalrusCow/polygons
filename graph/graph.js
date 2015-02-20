@@ -73,7 +73,9 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
   Graph.prototype.setOuterFace = function(nodes) {
     // Set the outer face of the graph. Nodes should be ordered such that
     // nodes[n] is adjacent to nodes[n-1] and nodes[n+1].
+    this.outerFace && this.outerFace.forEach(function(n) { n.color = 'red';});
     this.outerFace = nodes;
+    this.outerFace.forEach(function(n) { n.color = 'yellow';});
   };
 
   Graph.prototype.makeBarycentric = function(nodes) {
@@ -88,7 +90,13 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
       nodes[i].fixed = true;
     }
 
-    // Now compute the average
+    // Array of nodes whose positions we must solve for
+    var nodesToSolve = [];
+    // Now compute the average of all nodes
+    this.nodes.forEach(function(node) {
+      if (!node.fixed) nodesToSolve.push(node);
+    });
+
   };
 
   Graph.prototype.cutOuterFace = function(uIdx, vIdx) {
@@ -112,10 +120,11 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
     for (; i !== startIdx; i = (i + 1) % this.outerFace.length) {
       newFace.push(this.outerFace[i]);
     }
-    this.outerFace = newFace;
+    this.setOuterFace(newFace);
   };
 
-  Graph.prototype.addEdge = function(u, v, skipCheck) {
+
+  Graph.prototype.addEdge = function(u, v) {
     // Return true if the edge can be added and keep the embedding planar
     if (!(u instanceof Node)) u = this.nodes[u];
     if (!(v instanceof Node)) v = this.nodes[v];
@@ -128,10 +137,9 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
     // TODO: Create a barycentric embedding then look
     // for crossing lines.
 
-    var id = firstFreeIndex(this.edges);
-    var edge = new Edge(id, u, v);
+    var edge = new Edge(-1, u, v);
     // Determine if this edge causes an intersection with any existing edges
-    if (!skipCheck && this.crosses(edge)) {
+    if (this.crosses(edge)) {
       // Adding this edge would make this embedding non-planar
       return false;
     }
@@ -144,13 +152,19 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
       }
     }
 
-    // Not a directed graph
+    this._addEdge(u, v);
+    return true;
+  };
+
+  Graph.prototype._addEdge = function(u, v) {
+    // Directly add an edge with no checks
+    var id = firstFreeIndex(this.edges);
+    var edge = new Edge(id, u, v);
+
     u.addEdge(edge);
     v.addEdge(edge);
-
     this.edges[id] = edge;
     this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
-    return true;
   };
 
   Graph.prototype.draw = function(ctx) {
@@ -248,24 +262,52 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
       vPt.y = (s2 + uPt.y) / c2;
     }
 
+    var outerFaceIdx = this.outerFace.indexOf(node);
     // Remove the split node
     this.deleteNode(node);
 
     var u = this.addNode(uPt);
     var v = this.addNode(vPt);
+
+
     // TODO: These adds can fail sometimes =\
     // Probably need to do this properly (i.e. finding a 3-sep, etc) for this
     // to actually work. That is, not give points to nodes until the end
     n1.forEach(function(n) {
-      this.addEdge(u, n, true);
+      this._addEdge(u, n);
     }, this);
     n2.forEach(function(n) {
-      this.addEdge(v, n, true);
+      this._addEdge(v, n);
     }, this);
 
-    this.addEdge(u, v, true);
+    this._addEdge(u, v);
 
+    if (outerFaceIdx !== -1) this.splitOuterFace(outerFaceIdx, u, v);
     return [u.id, v.id];
+  };
+
+  Graph.prototype.splitOuterFace = function(idx, u, v) {
+      // Update outer face
+      var f = this.outerFace;
+      var r = f[(idx + 1) % f.length];
+      var l = f[(idx - 1) % f.length];
+      var li = u.neighbours.indexOf(l);
+      var ri = u.neighbours.indexOf(r);
+
+      if (li === -1 && ri === -1)
+        // the split has v adjacent to both neighbours
+        this.outerFace.splice(idx, 1, v);
+      else if (li !== -1 && r1 !== -1)
+        // the split has u adjacent to both neighbours
+        this.outerFace.splice(idx, 1, u);
+      else if (li === -1)
+        // the split has u adjacent to the preceding neighbour
+        this.outerFace.splice(idx, 1, u, v);
+      else
+        // the split has v adjacent to the preceding neighbour
+        this.outerFace.splice(idx, 1, v, u);
+      // Call to update colors etc
+      this.setOuterFace(this.outerFace);
   };
 
   return Graph;
