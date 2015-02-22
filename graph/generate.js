@@ -46,11 +46,19 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     graph.addEdge(n4, n1);
     graph.setOuterFace([n1, n2, n3, n4]);
 
-    var m = graph.addNode({x : 10, y : 10});
-    graph._addEdge(m, n1);
-    graph._addEdge(m, n2);
-    graph._addEdge(m, n3);
-    graph._addEdge(m, n4);
+    var v = graph.addNode({x : 10, y : 10});
+    var u = graph.addNode({x : 50, y : 50});
+    var x = graph.addNode({x : 100, y : 100});
+    u.color = 'white';
+    v.color = 'black';
+    x.color = 'grey';
+    graph._addEdge(v, n1);
+    graph._addEdge(v, n2);
+    graph._addEdge(u, n3);
+    graph._addEdge(x, n4);
+    graph._addEdge(u, v);
+    graph._addEdge(x, v);
+    graph._addEdge(x, u);
 
 
     n1.fixed = true;

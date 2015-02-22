@@ -114,8 +114,8 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
      * Let C = c1 + c2 + ... + ct. Then,
      *      v = (C + u1 + u2 + ... + ul) / k
      * Writing this in a form suitable for input to a matrix gives
-     *      (k * v) + u1 + u2 + ... + ul = C
-     * Where u1, u2, ..., ul are variables with coefficient 1.
+     *      (k * v) - u1 - u2 - ... - ul = C
+     * Where u1, u2, ..., ul are variables with coefficient -1.
      */
     var n = nodesToSolve.length;
 
@@ -127,7 +127,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     ['x', 'y'].forEach(function(c) {
       var matrix = new Matrix(n);
 
-      // What we will augment the matrix with
+      // What we will augment the matrix with (known coordinates)
       var aug = [];
       nodesToSolve.forEach(function(node, idx) {
         // Fill the matrix as described above
@@ -144,7 +144,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
           // Neighbour not fixed, so it is a variable
           nIndex = nodesToSolve.indexOf(neighbour);
-          row[nIndex] = 1;
+          row[nIndex] = -1;
         });
 
         aug.push(known);
@@ -157,12 +157,14 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
         return;
       }
 
+      // Push answers to coords
       ans.forEach(function(val, idx) {
         coords[idx][c] = val;
       });
 
     });
 
+    // Update coords at the end
     coords.forEach(function(coord, idx) {
       nodesToSolve[idx].updateCoords(coord);
     });
@@ -337,7 +339,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
     var u = this.addNode(uPt);
     var v = this.addNode(vPt);
-
 
     // TODO: These adds can fail sometimes =\
     // Probably need to do this properly (i.e. finding a 3-sep, etc) for this
