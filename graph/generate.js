@@ -34,6 +34,39 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     var radius = util.random.number(100, 150);
     var wheelSize = util.random.number(5, 10);
 
+    var graph = new Graph(mid, radius);
+    var n1 = graph.addNode({ x : 5, y : canvas.height - 5 });
+    var n2 = graph.addNode({ x : 5, y : 5});
+    var n3 = graph.addNode({ x : canvas.width - 5, y : 5 });
+    var n4 = graph.addNode({ x : canvas.width - 5, y : canvas.height - 5 });
+
+    graph.addEdge(n1, n2);
+    graph.addEdge(n2, n3);
+    graph.addEdge(n3, n4);
+    graph.addEdge(n4, n1);
+    graph.setOuterFace([n1, n2, n3, n4]);
+
+    var m = graph.addNode({x : 10, y : 10});
+    graph._addEdge(m, n1);
+    graph._addEdge(m, n2);
+    graph._addEdge(m, n3);
+    graph._addEdge(m, n4);
+
+
+    n1.fixed = true;
+    n1.color = 'purple';
+    n2.fixed = true;
+    n2.color = 'yellow';
+    n3.fixed = true;
+    n3.color = 'red';
+    n4.fixed = true;
+    n4.color = 'blue';
+
+    graph.makeBarycentric();
+
+    graph.draw(ctx);
+    return;
+
     var graph = generateWheel(wheelSize, mid, radius);
 
     for (var action = 0; action < 5; ++action) {

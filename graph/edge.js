@@ -22,5 +22,9 @@ define(['lines'], function(lines) {
     this.line.draw();
   };
 
+  Edge.prototype.updateCoords = function() {
+    this.line = new Line(this.nodes[0].coords, this.nodes[1].coords);
+  };
+
   return Edge;
 });

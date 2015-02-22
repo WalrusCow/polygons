@@ -44,5 +44,12 @@ define(['graph/edge'], function(Edge) {
     return this.neighbours.indexOf(node) !== -1;
   };
 
+  Node.prototype.updateCoords = function(newCoords) {
+    this.coords = newCoords;
+    this.edges.forEach(function(edge) {
+      edge.updateCoords();
+    });
+  };
+
   return Node;
 });

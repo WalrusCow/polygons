@@ -1,5 +1,5 @@
-define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
-       function(lines, util, Node, Edge, graphUtil) {
+define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
+       function(lines, util, Node, Edge, graphUtil, Matrix) {
   var Line = lines.Line;
 
   function firstFreeIndex(list) {
@@ -92,12 +92,10 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
   Graph.prototype.makeBarycentric = function() {
     // Modify the graph to have a barycentric embedding using the outer
     // face as the fixed face.
-    this.nodes.forEach(function(node) { node.fixed = false; });
-
     var pts = graphUtil.convexPoints(
         this.outerFace.length, this.midPoint, this.radius);
     this.outerFace.forEach(function(node, idx) {
-      node.coords = pts[idx];
+      node.updateCoords(pts[idx]);
     });
 
     // Array of nodes whose positions we must solve for
@@ -121,8 +119,9 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
      */
     var n = nodesToSolve.length;
 
+    var coords = [];
     nodesToSolve.forEach(function(node) {
-      node.coords = { x : null, y : null };
+      coords.push({ x : null, y : null });
     });
 
     ['x', 'y'].forEach(function(c) {
@@ -151,6 +150,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
         aug.push(known);
       });
 
+      matrix.augment(aug);
       var ans = matrix.solve();
       if (!ans) {
         console.log('Degenerate barycentric embedding!');
@@ -158,9 +158,13 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
       }
 
       ans.forEach(function(val, idx) {
-        nodesToSolve[idx].coords[c] = val;
+        coords[idx][c] = val;
       });
 
+    });
+
+    coords.forEach(function(coord, idx) {
+      nodesToSolve[idx].updateCoords(coord);
     });
   };
 
