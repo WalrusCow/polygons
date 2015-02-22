@@ -13,17 +13,23 @@ define([], function() {
     }
   }
 
+  Matrix.prototype.augment = function(ans) {
+    for (var i = 0; i < ans.length; ++i) {
+      this.rows[i].push(ans[i]);
+    }
+    this.augmented = true;
+  };
+
   Matrix.prototype.solve = function() {
     // Solve the matrix, returning a list of length n containing the solutions
     // (in the original order they were entered)
     // This *will* modify the matrix
     // Return false if the matrix is not solvable (a bad time)
 
-    // Augment the matrix such that we can solve it
-    this.rows.forEach(function(row) {
-      row.push(1);
-    });
-    this.augmented = true;
+    if (!this.augmented) {
+      console.log('Matrix not augmented');
+      return false;
+    }
 
     // Now row-reduce the augmented matrix using some basic strategy
     for (var i = 0; i < this.rows.length; ++i) {

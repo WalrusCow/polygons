@@ -73,30 +73,95 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util'],
   Graph.prototype.setOuterFace = function(nodes) {
     // Set the outer face of the graph. Nodes should be ordered such that
     // nodes[n] is adjacent to nodes[n-1] and nodes[n+1].
-    this.outerFace && this.outerFace.forEach(function(n) { n.color = 'red';});
+    if (this.outerFace) {
+      this.outerFace.forEach(function(n) {
+        // All other nodes are red and variable position
+        n.color = 'red';
+        n.fixed = false;
+      });
+    }
+
     this.outerFace = nodes;
-    this.outerFace.forEach(function(n) { n.color = 'yellow';});
+    this.outerFace.forEach(function(n) {
+      // Outer face is yellow and fixed position
+      n.color = 'yellow';
+      n.fixed = true;
+    });
   };
 
-  Graph.prototype.makeBarycentric = function(nodes) {
+  Graph.prototype.makeBarycentric = function() {
     // Modify the graph to have a barycentric embedding using the outer
     // face as the fixed face.
-
     this.nodes.forEach(function(node) { node.fixed = false; });
 
-    var pts = graphUtil.convexPoints(nodes.length, this.midPoint, this.radius);
-    for (var i = 0; i < nodes.length; ++i) {
-      nodes[i].coords = pts[i];
-      nodes[i].fixed = true;
-    }
+    var pts = graphUtil.convexPoints(
+        this.outerFace.length, this.midPoint, this.radius);
+    this.outerFace.forEach(function(node, idx) {
+      node.coords = pts[idx];
+    });
 
     // Array of nodes whose positions we must solve for
     var nodesToSolve = [];
-    // Now compute the average of all nodes
     this.nodes.forEach(function(node) {
       if (!node.fixed) nodesToSolve.push(node);
     });
 
+    /* The position of a given node v can be described as
+     *      v = (n1 + n2 + ... + nk) / k
+     * where ni is the position of the ith neighbour of v. Some nodes have
+     * fixed positions. Let c1, c2, ..., ct be the positions of the
+     * fixed neighbours of v. Let u1, u2, ..., ul be the positions v's
+     * neighbours with unknown positions. Then,
+     *      v = (c1 + c2 + ... + ct + u1 + u2 + ... + ul) / k
+     * Let C = c1 + c2 + ... + ct. Then,
+     *      v = (C + u1 + u2 + ... + ul) / k
+     * Writing this in a form suitable for input to a matrix gives
+     *      (k * v) + u1 + u2 + ... + ul = C
+     * Where u1, u2, ..., ul are variables with coefficient 1.
+     */
+    var n = nodesToSolve.length;
+
+    nodesToSolve.forEach(function(node) {
+      node.coords = { x : null, y : null };
+    });
+
+    ['x', 'y'].forEach(function(c) {
+      var matrix = new Matrix(n);
+
+      // What we will augment the matrix with
+      var aug = [];
+      nodesToSolve.forEach(function(node, idx) {
+        // Fill the matrix as described above
+        var known = 0;
+
+        var row = matrix.rows[idx];
+        row[idx] = node.neighbours.length;
+
+        node.neighbours.forEach(function(neighbour) {
+          if (neighbour.fixed) {
+            known += neighbour.coords[c];
+            return;
+          }
+
+          // Neighbour not fixed, so it is a variable
+          nIndex = nodesToSolve.indexOf(neighbour);
+          row[nIndex] = 1;
+        });
+
+        aug.push(known);
+      });
+
+      var ans = matrix.solve();
+      if (!ans) {
+        console.log('Degenerate barycentric embedding!');
+        return;
+      }
+
+      ans.forEach(function(val, idx) {
+        nodesToSolve[idx].coords[c] = val;
+      });
+
+    });
   };
 
   Graph.prototype.cutOuterFace = function(uIdx, vIdx) {

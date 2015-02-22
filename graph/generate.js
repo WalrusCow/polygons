@@ -10,7 +10,7 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     for (var i = 0; i < points.length; ++i) {
       var node = graph.addNode(points[i]);
       outerFace.push(node);
-      node.fixed = true;
+
       if (lastNode) graph.addEdge(node, lastNode);
       else firstNode = node;
       lastNode = node;
