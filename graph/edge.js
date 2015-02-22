@@ -3,13 +3,13 @@ define(['lines'], function(lines) {
 
   function Edge(id, u, v) {
     this.id = id;
-    this.line = new Line(u.coords, v.coords);
-    this.nodes = [u, v];
+    this.u = u;
+    this.v = v;
   }
 
   Edge.prototype.otherEnd = function(end) {
-    if (this.nodes[0].id === end.id) return this.nodes[1];
-    if (this.nodes[1].id === end.id) return this.nodes[0];
+    if (this.u.id === end.id) return this.v;
+    if (this.v.id === end.id) return this.u;
     throw new Error("Given node not in this edge");
   };
 
@@ -23,7 +23,9 @@ define(['lines'], function(lines) {
   };
 
   Edge.prototype.updateCoords = function() {
-    this.line = new Line(this.nodes[0].coords, this.nodes[1].coords);
+    if (this.u.coords && this.v.coords) {
+      this.line = new Line(this.u.coords, this.v.coords);
+    }
   };
 
   return Edge;

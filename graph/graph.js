@@ -58,7 +58,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
     node.edges.forEach(function(edge, idx) {
       // Remove the edges from the other ends
-      node.neighbours[idx].deleteEdge(edge);
+      edge.otherEnd(node).deleteEdge(edge);
       delete this.edges[edge.id];
     }, this);
     delete this.nodes[node.id];
@@ -122,6 +122,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     var coords = [];
     nodesToSolve.forEach(function(node) {
       coords.push({ x : null, y : null });
+      node.coords = null;
     });
 
     ['x', 'y'].forEach(function(c) {
@@ -154,7 +155,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       var ans = matrix.solve();
       if (!ans) {
         console.log('Degenerate barycentric embedding!');
-        return;
+        return false;
       }
 
       // Push answers to coords
@@ -168,6 +169,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     coords.forEach(function(coord, idx) {
       nodesToSolve[idx].updateCoords(coord);
     });
+    return true;
   };
 
   Graph.prototype.cutOuterFace = function(uIdx, vIdx) {
@@ -194,36 +196,46 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     this.setOuterFace(newFace);
   };
 
-
   Graph.prototype.addEdge = function(u, v) {
-    // Return true if the edge can be added and keep the embedding planar
+    // Return true if the edge can be added while keeping the graph planar
     if (!(u instanceof Node)) u = this.nodes[u];
     if (!(v instanceof Node)) v = this.nodes[v];
+
+    if (!this.outerFace) {
+      // If we have no outer face then we have not yet been initialized
+      // so we should just trust the user to add a good edge.
+      // This is because if we are not yet 3-connected then we cannot perform
+      // the same planarity checks.
+      this._addEdge(u, v);
+      return true;
+    }
 
     if (u.adjacentTo(v)) {
       // Simple graph only
       return false;
     }
 
-    // TODO: Create a barycentric embedding then look
-    // for crossing lines.
+    var edge = this._addEdge(u, v);
 
-    var edge = new Edge(-1, u, v);
-    // Determine if this edge causes an intersection with any existing edges
-    if (this.crosses(edge)) {
-      // Adding this edge would make this embedding non-planar
+    // Update the outer face if we must
+    var uIdx = this.outerFace.indexOf(u);
+    var vIdx = this.outerFace.indexOf(v);
+    var oldFace;
+    if (uIdx !== -1 && vIdx !== -1) {
+      oldFace = this.outerFace;
+      this.cutOuterFace(uIdx, vIdx);
+    }
+
+    if (!this.makeBarycentric() || this.crosses(edge)) {
+      // We cannot create a barycentric embedding with the added edge,
+      // or the barycentric embedding is not planar.
+      if (oldFace) {
+        this.setOuterFace(oldFace);
+      }
+      this.deleteEdge(edge);
       return false;
     }
 
-    if (this.outerFace) {
-      var uIdx = this.outerFace.indexOf(u);
-      var vIdx = this.outerFace.indexOf(v);
-      if (uIdx !== -1 && vIdx !== -1) {
-        this.cutOuterFace(uIdx, vIdx);
-      }
-    }
-
-    this._addEdge(u, v);
     return true;
   };
 
@@ -236,6 +248,14 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     v.addEdge(edge);
     this.edges[id] = edge;
     this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
+    return edge;
+  };
+
+  Graph.prototype.deleteEdge = function(edge) {
+    // Delete the given edge
+    edge.u.deleteEdge(edge);
+    edge.v.deleteEdge(edge);
+    delete this.edges[edge.id];
   };
 
   Graph.prototype.draw = function(ctx) {
@@ -290,6 +310,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       return false;
     }
 
+    // TODO: Remove once all calls use nodes
     if (!(n1[0] instanceof Node)) {
       var idToNode = (function(id) { return this.nodes[id]; });
       n1 = n1.map(idToNode, this);
@@ -297,52 +318,16 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     }
 
     // First check if the split is valid
-    var neighbours = this.radialOrderNeighbours(node);
+    //var neighbours = this.radialOrderNeighbours(node);
     // TODO: Now check that n1 and n2 are contiguous in `neighbours`
-
-    var coord = function(coord) {
-      return function(node) { return node.coords[coord]; };
-    };
-    var sum = function(x, y) { return x + y; };
-
-    // Use average coordinates for new points
-    // (solve the system, since we add (u, v) as an edge)
-    // TODO: Generalize to an n-dimensional matrix case for the complete
-    // barycentric embedding of a graph
-    var uPt = {};
-    var vPt = {};
-    if (node.fixed) {
-      uPt.x = node.coords.x;
-      uPt.y = node.coords.y;
-
-      vPt.x = ((n2.map(coord('x')).reduce(sum, 0)) + uPt.x) / (n2.length + 1);
-      vPt.y = ((n2.map(coord('y')).reduce(sum, 0)) + uPt.y) / (n2.length + 1);
-    }
-    else {
-      var s1 = n1.map(coord('x')).reduce(sum, 0);
-      var s2 = n2.map(coord('x')).reduce(sum, 0);
-      var c1 = n1.length + 1;
-      var c2 = n2.length + 1;
-
-      uPt.x = (s1 + s2/c2) / (c1 - (1/c2));
-      vPt.x = (s2 + uPt.x) / c2;
-
-      s1 = n1.map(coord('y')).reduce(sum, 0);
-      s2 = n2.map(coord('y')).reduce(sum, 0);
-      uPt.y = (s1 + s2/c2) / (c1 - (1/c2));
-      vPt.y = (s2 + uPt.y) / c2;
-    }
 
     var outerFaceIdx = this.outerFace.indexOf(node);
     // Remove the split node
     this.deleteNode(node);
 
-    var u = this.addNode(uPt);
-    var v = this.addNode(vPt);
+    var u = this.addNode();
+    var v = this.addNode();
 
-    // TODO: These adds can fail sometimes =\
-    // Probably need to do this properly (i.e. finding a 3-sep, etc) for this
-    // to actually work. That is, not give points to nodes until the end
     n1.forEach(function(n) {
       this._addEdge(u, n);
     }, this);
@@ -353,16 +338,22 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     this._addEdge(u, v);
 
     if (outerFaceIdx !== -1) this.splitOuterFace(outerFaceIdx, u, v);
+    this.makeBarycentric();
     return [u.id, v.id];
   };
+
+  function mod(a, b) {
+    // Actually work for negative numbers...
+    return ((a % b) + b) % b;
+  }
 
   Graph.prototype.splitOuterFace = function(idx, u, v) {
       // Update outer face
       var f = this.outerFace;
-      var r = f[(idx + 1) % f.length];
-      var l = f[(idx - 1) % f.length];
-      var li = u.neighbours.indexOf(l);
+      var r = f[mod(idx + 1, f.length)];
+      var l = f[mod(idx - 1, f.length)];
       var ri = u.neighbours.indexOf(r);
+      var li = u.neighbours.indexOf(l);
 
       if (li === -1 && ri === -1)
         // the split has v adjacent to both neighbours
@@ -372,10 +363,10 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
         this.outerFace.splice(idx, 1, u);
       else if (li === -1)
         // the split has u adjacent to the preceding neighbour
-        this.outerFace.splice(idx, 1, u, v);
+        this.outerFace.splice(idx, 1, v, u);
       else
         // the split has v adjacent to the preceding neighbour
-        this.outerFace.splice(idx, 1, v, u);
+        this.outerFace.splice(idx, 1, u, v);
       // Call to update colors etc
       this.setOuterFace(this.outerFace);
   };

@@ -1,16 +1,10 @@
 define(['graph/edge'], function(Edge) {
-  function Node(id, point, fixed) {
+  function Node(id) {
     this.id = id;
-    this.coords = {
-      x : Math.round(point.x),
-      y : Math.round(point.y)
-    };
+
     this.neighbours = [];
     this.edges = [];
     this.degree = 0;
-
-    // Whether or not this node is fixed in position
-    this.fixed = fixed;
 
     this.radius = 3;
     this.color = 'red';

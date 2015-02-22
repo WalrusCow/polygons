@@ -1,14 +1,13 @@
 define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
   function generateWheel(size, midPoint, radius) {
     var graph = new Graph(midPoint, radius);
-    var points = graphUtil.convexPoints(size, midPoint, radius);
-    var midNode = graph.addNode(midPoint);
+    var midNode = graph.addNode();
     var lastNode;
     var firstNode;
 
     var outerFace = [];
-    for (var i = 0; i < points.length; ++i) {
-      var node = graph.addNode(points[i]);
+    for (var i = 0; i < size; ++i) {
+      var node = graph.addNode();
       outerFace.push(node);
 
       if (lastNode) graph.addEdge(node, lastNode);
@@ -34,54 +33,59 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     var radius = util.random.number(100, 150);
     var wheelSize = util.random.number(5, 10);
 
+    /*
     var graph = new Graph(mid, radius);
-    var n1 = graph.addNode({ x : 5, y : canvas.height - 5 });
-    var n2 = graph.addNode({ x : 5, y : 5});
-    var n3 = graph.addNode({ x : canvas.width - 5, y : 5 });
-    var n4 = graph.addNode({ x : canvas.width - 5, y : canvas.height - 5 });
-
+    var n1 = graph.addNode();
+    var n2 = graph.addNode();
+    var n3 = graph.addNode();
+    var n4 = graph.addNode();
     graph.addEdge(n1, n2);
     graph.addEdge(n2, n3);
     graph.addEdge(n3, n4);
     graph.addEdge(n4, n1);
-    graph.setOuterFace([n1, n2, n3, n4]);
 
-    var v = graph.addNode({x : 10, y : 10});
-    var u = graph.addNode({x : 50, y : 50});
-    var x = graph.addNode({x : 100, y : 100});
+    var v = graph.addNode();
+    var u = graph.addNode();
+    var x = graph.addNode();
     u.color = 'white';
     v.color = 'black';
     x.color = 'grey';
-    graph._addEdge(v, n1);
-    graph._addEdge(v, n2);
-    graph._addEdge(u, n3);
-    graph._addEdge(x, n4);
-    graph._addEdge(u, v);
-    graph._addEdge(x, v);
-    graph._addEdge(x, u);
+    graph.addEdge(v, n1);
+    graph.addEdge(v, n2);
+    graph.addEdge(u, n3);
+    graph.addEdge(x, n4);
+    graph.addEdge(u, v);
+    graph.addEdge(x, v);
+    graph.addEdge(x, u);
 
+    graph.setOuterFace([n1, n2, n3, n4]);
 
-    n1.fixed = true;
     n1.color = 'purple';
-    n2.fixed = true;
     n2.color = 'yellow';
-    n3.fixed = true;
     n3.color = 'red';
-    n4.fixed = true;
     n4.color = 'blue';
 
     graph.makeBarycentric();
 
     graph.draw(ctx);
     return;
+    */
+
+    ctx = document.getElementById('polyCanvas').getContext('2d');
+    var ctx2 = document.getElementById('lineCanvas').getContext('2d');
 
     var graph = generateWheel(wheelSize, mid, radius);
+    graph.makeBarycentric();
 
     for (var action = 0; action < 5; ++action) {
       if (graph.maxDegree < 4) {
         // No choice but to add an edge
         console.log("No node to split");
+        ctx2.clearRect(0,0,1000,1000);
+        graph.draw(ctx2);
         graphUtil.addRandomEdge(graph);
+        ctx.clearRect(0,0,1000,1000);
+        graph.draw(ctx);
         continue;
       }
 
@@ -89,15 +93,24 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
 
       if (split) {
         console.log("Splitting a random node");
+        ctx2.clearRect(0,0,1000,1000);
+        graph.draw(ctx2);
         graphUtil.splitRandomNode(graph);
+        ctx.clearRect(0,0,1000,1000);
+        graph.draw(ctx);
       }
       else {
         console.log("Adding a random edge");
+        ctx2.clearRect(0,0,1000,1000);
+        graph.draw(ctx2);
         graphUtil.addRandomEdge(graph);
+        ctx.clearRect(0,0,1000,1000);
+        graph.draw(ctx);
       }
 
     }
 
+    graph.makeBarycentric();
     graph.draw(ctx);
   };
 });
