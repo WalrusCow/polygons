@@ -33,8 +33,10 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     return this.edges.some(function(e) {
       var pt = edge.intersects(e);
       var line = edge.line;
-      // Endpoint intersections don't count as crossing
-      return pt && !pointsEqual(pt, line.start) && !pointsEqual(pt, line.end)
+      return pt &&
+        // Doesn't count as crossing if the two lines meet at the ends
+        !((pointsEqual(pt, line.start) || pointsEqual(pt, line.end)) &&
+          (pointsEqual(pt, e.line.start) || pointsEqual(pt, e.line.end)))
     });
   };
 
@@ -217,6 +219,12 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
     var edge = this._addEdge(u, v);
 
+    // Save all node positions before insertion
+    var posns = {};
+    this.nodes.forEach(function(node) {
+      posns[node.id] = node.coords;
+    });
+
     // Update the outer face if we must
     var uIdx = this.outerFace.indexOf(u);
     var vIdx = this.outerFace.indexOf(v);
@@ -226,13 +234,33 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       this.cutOuterFace(uIdx, vIdx);
     }
 
-    if (!this.makeBarycentric() || this.crosses(edge)) {
+    if (!this.makeBarycentric()) {
+      if (oldFace) {
+        this.setOuterFace(oldFace);
+      }
+      this.deleteEdge(edge);
+      this.makeBarycentric();
+      return false;
+    }
+
+    // Which edges we have to check
+    var edgesToCheck = {};
+    this.nodes.forEach(function(node) {
+      if (pointsEqual(node.coords, posns[node.id])) return;
+      node.edges.forEach(function(e) {
+        edgesToCheck[e.id] = e;
+      });
+    });
+
+    for (var key in edgesToCheck) {
+      if (!this.crosses(edgesToCheck[key])) continue;
       // We cannot create a barycentric embedding with the added edge,
       // or the barycentric embedding is not planar.
       if (oldFace) {
         this.setOuterFace(oldFace);
       }
       this.deleteEdge(edge);
+      this.makeBarycentric();
       return false;
     }
 
@@ -358,7 +386,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       if (li === -1 && ri === -1)
         // the split has v adjacent to both neighbours
         this.outerFace.splice(idx, 1, v);
-      else if (li !== -1 && r1 !== -1)
+      else if (li !== -1 && ri !== -1)
         // the split has u adjacent to both neighbours
         this.outerFace.splice(idx, 1, u);
       else if (li === -1)
