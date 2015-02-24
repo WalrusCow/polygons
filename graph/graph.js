@@ -31,6 +31,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     // Return true if the line intersects any edge
     var crosses = false;
     return this.edges.some(function(e) {
+      if (e.id === edge.id) return false;
       var pt = edge.intersects(e);
       var line = edge.line;
       return pt &&
@@ -40,23 +41,17 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     });
   };
 
+  Graph.prototype.computeMaxDegree = function() {
+    var a = this.maxDegree;
+    this.maxDegree = 0;
+    this.nodes.forEach(function(n) {
+      this.maxDegree = Math.max(this.maxDegree, n.degree);
+    }, this);
+  };
+
   Graph.prototype.deleteNode = function(node) {
     // Delete a node and all its edges
     if (!(node instanceof Node)) node = this.nodes[node];
-
-    // We have to find the new max degree
-    this.maxDegree = 0;
-    this.nodes.forEach(function(n) {
-      if (n === node) return;
-      if (n.degree > this.maxDegree) this.maxDegree = n.degree;
-    }, this);
-
-    // Find new min degree
-    this.minDegree = Infinity;
-    this.nodes.forEach(function(n) {
-      if (n === node) return;
-      if (n.degree < this.minDegree) this.minDegree = n.degree;
-    }, this);
 
     node.edges.forEach(function(edge, idx) {
       // Remove the edges from the other ends
@@ -64,6 +59,8 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       delete this.edges[edge.id];
     }, this);
     delete this.nodes[node.id];
+
+    this.computeMaxDegree();
   };
 
   Graph.prototype.addNode = function(pt) {
@@ -240,6 +237,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       }
       this.deleteEdge(edge);
       this.makeBarycentric();
+      this.computeMaxDegree();
       return false;
     }
 
@@ -261,9 +259,12 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       }
       this.deleteEdge(edge);
       this.makeBarycentric();
+      this.computeMaxDegree();
       return false;
     }
 
+    this.computeMaxDegree();
+    debugger;
     return true;
   };
 
@@ -275,7 +276,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     u.addEdge(edge);
     v.addEdge(edge);
     this.edges[id] = edge;
-    this.maxDegree = Math.max(u.degree, v.degree, this.maxDegree);
     return edge;
   };
 
@@ -283,6 +283,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     // Delete the given edge
     edge.u.deleteEdge(edge);
     edge.v.deleteEdge(edge);
+    this.computeMaxDegree();
     delete this.edges[edge.id];
   };
 

@@ -17,7 +17,10 @@ define(['util'], function(util) {
     graph.nodes.forEach(function(node) {
       if (node.degree >= 4) choices.push(node);
     });
-    if (choices.length === 0) return false;
+    if (choices.length === 0) {
+      console.log("Please fix the max degree code");
+      return false;
+    }
     var node = util.random.choose(1, choices)[0];
 
     // Sorted
