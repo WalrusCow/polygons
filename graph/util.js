@@ -65,7 +65,7 @@ define(['util'], function(util) {
 
   GraphUtil.addRandomEdge = function(graph) {
     // Add a random edge in the graph that maintains planarity
-    var TRIES = 10;
+    var TRIES = 20;
     var nodes = graph.nodes;
 
     for (var i = 0; i < TRIES; ++i) {
