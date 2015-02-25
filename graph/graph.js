@@ -86,8 +86,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     // nodes[n] is adjacent to nodes[n-1] and nodes[n+1].
     if (this.outerFace) {
       this.outerFace.forEach(function(n) {
-        // All other nodes are red and variable position
-        n.color = 'red';
+        // All other nodes variable position
         n.fixed = false;
       });
     }
@@ -95,7 +94,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     this.outerFace = nodes;
     this.outerFace.forEach(function(n) {
       // Outer face is yellow and fixed position
-      n.color = 'yellow';
       n.fixed = true;
     });
   };

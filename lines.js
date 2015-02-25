@@ -11,7 +11,7 @@ define([], function() {
     if (options.canvas) {
       this.setCanvas(options.canvas);
     }
-    this._strokeColour = 'blue';
+    this.strokeColour = options.strokeColour || 'blue';
 
     this.slope = (p1.y - p2.y) / (p1.x - p2.x);
     if (isNaN(this.slope) || Math.abs(this.slope) === Infinity) {
@@ -42,7 +42,7 @@ define([], function() {
     ctx.beginPath();
     ctx.moveTo(this.start.x, this.start.y);
     ctx.lineTo(this.end.x, this.end.y);
-    ctx.strokeStyle = this._strokeColour;
+    ctx.strokeStyle = this.strokeColour;
     ctx.stroke();
   };
 

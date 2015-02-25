@@ -5,6 +5,8 @@ define(['lines'], function(lines) {
     this.id = id;
     this.u = u;
     this.v = v;
+
+    this._lineOpts = { strokeColour : '#808080' };
   }
 
   Edge.prototype.otherEnd = function(end) {
@@ -24,7 +26,7 @@ define(['lines'], function(lines) {
 
   Edge.prototype.updateCoords = function() {
     if (this.u.coords && this.v.coords) {
-      this.line = new Line(this.u.coords, this.v.coords);
+      this.line = new Line(this.u.coords, this.v.coords, this._lineOpts);
     }
   };
 
