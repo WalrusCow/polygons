@@ -48,7 +48,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
         // Doesn't count as crossing if the two lines meet at the ends
         !((pointsEqual(pt, line.start) || pointsEqual(pt, line.end)) &&
           (pointsEqual(pt, e.line.start) || pointsEqual(pt, e.line.end)))
-      //if (edgesCross) console.log("crosses", edge, e, pt);
       if (edgesCross) crosses = true;
     }, this);
     return crosses;
@@ -277,8 +276,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     }
 
     this.computeMaxDegree();
-    this.makeBarycentric();
-    if (!this.isPlanarEmbedding()) console.log('fail onedge');
     return true;
   };
 
@@ -382,7 +379,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
     if (outerFaceIdx !== -1) this.splitOuterFace(outerFaceIdx, u, v);
     this.makeBarycentric();
-    if (!this.isPlanarEmbedding()) console.log('fail on split');
     return [u.id, v.id];
   };
 

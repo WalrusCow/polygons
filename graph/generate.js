@@ -22,7 +22,6 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
   }
 
   return function(options) {
-    try{
     var canvas = document.getElementById(options.canvas);
     var ctx = canvas.getContext('2d');
 
@@ -40,29 +39,21 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     for (var action = 0; action < 80; ++action) {
       if (graph.maxDegree < 4) {
         // No choice but to add an edge
-        console.log("No node to split");
         graphUtil.addRandomEdge(graph);
         continue;
       }
 
       var split = Math.random() < 0.7;
-
       if (split) {
-        console.log("Splitting a random node");
         graphUtil.splitRandomNode(graph);
       }
       else {
-        console.log("Adding a random edge");
         graphUtil.addRandomEdge(graph);
       }
-
     }
 
     graph.makeBarycentric();
     graph.draw(ctx);
     return graph;
-    } finally {
-      return graph;
-    }
   };
 });
