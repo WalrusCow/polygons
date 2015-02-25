@@ -40,6 +40,8 @@ define(['graph/edge'], function(Edge) {
 
   Node.prototype.updateCoords = function(newCoords) {
     this.coords = newCoords;
+    this.coords.x = Math.round(this.coords.x);
+    this.coords.y = Math.round(this.coords.y);
     this.edges.forEach(function(edge) {
       edge.updateCoords();
     });

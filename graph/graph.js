@@ -27,18 +27,31 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     this.radius = radius;
   }
 
+  Graph.prototype.isPlanarEmbedding = function() {
+    var planar = true;
+    this.edges.forEach(function(e) {
+      if (this.crosses(e)) {
+        planar = false;
+      }
+    }, this);
+    return planar;
+  };
+
   Graph.prototype.crosses = function(edge) {
     // Return true if the line intersects any edge
     var crosses = false;
-    return this.edges.some(function(e) {
+    this.edges.forEach(function(e) {
       if (e.id === edge.id) return false;
       var pt = edge.intersects(e);
       var line = edge.line;
-      return pt &&
+      var edgesCross = pt &&
         // Doesn't count as crossing if the two lines meet at the ends
         !((pointsEqual(pt, line.start) || pointsEqual(pt, line.end)) &&
           (pointsEqual(pt, e.line.start) || pointsEqual(pt, e.line.end)))
-    });
+      //if (edgesCross) console.log("crosses", edge, e, pt);
+      if (edgesCross) crosses = true;
+    }, this);
+    return crosses;
   };
 
   Graph.prototype.computeMaxDegree = function() {
@@ -264,7 +277,8 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     }
 
     this.computeMaxDegree();
-    debugger;
+    this.makeBarycentric();
+    if (!this.isPlanarEmbedding()) console.log('fail onedge');
     return true;
   };
 
@@ -368,6 +382,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
     if (outerFaceIdx !== -1) this.splitOuterFace(outerFaceIdx, u, v);
     this.makeBarycentric();
+    if (!this.isPlanarEmbedding()) console.log('fail on split');
     return [u.id, v.id];
   };
 

@@ -22,6 +22,7 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
   }
 
   return function(options) {
+    try{
     var canvas = document.getElementById(options.canvas);
     var ctx = canvas.getContext('2d');
 
@@ -59,5 +60,9 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
 
     graph.makeBarycentric();
     graph.draw(ctx);
+    return graph;
+    } finally {
+      return graph;
+    }
   };
 });

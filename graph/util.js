@@ -18,7 +18,7 @@ define(['util'], function(util) {
       if (node.degree >= 4) choices.push(node);
     });
     if (choices.length === 0) {
-      console.log("Please fix the max degree code");
+      //console.log("Please fix the max degree code");
       return false;
     }
     var node = util.random.choose(1, choices)[0];
@@ -76,12 +76,12 @@ define(['util'], function(util) {
       var u = choices[0];
       var v = choices[1];
       if (graph.addEdge(u, v)) {
-        console.log("Adding random edge on attempt " + i);
+        //console.log("Adding random edge on attempt " + i);
         return true;
       }
     }
 
-    console.log("Failed to add random edge");
+    //console.log("Failed to add random edge");
     return false;
   }
 
