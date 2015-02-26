@@ -21,18 +21,23 @@ define(['util'], function(util) {
       //console.log("Please fix the max degree code");
       return false;
     }
-    var node = util.random.choose(1, choices)[0];
+    var node = util.random.choose(1, choices);
 
     // Sorted
     var neighbours = graph.radialOrderNeighbours(node);
 
-    // Now randomly partition the neighbours
-    var v1, v2;
-    // We cannot choose nodes that are next to each other in radial order
-    do {
-      var l = util.random.choose(2, neighbours);
-      v1 = l[0]; v2 = l[1];
-    } while (GraphUtil.circularNeighbours(v1, v2, neighbours))
+    var v1 = util.random.choose(1, neighbours);
+    // We want to split almost evenly, but randomly
+    var idx = neighbours.indexOf(v1);
+    var l = neighbours.length;
+
+    // Allow max split to be a 70/30 split
+    var maxSplit = Math.floor(l/2 + l/5);
+    var minSplit = Math.max(2, Math.ceil(l/2 - l/5));
+
+    var jdx = (idx + util.random.number(minSplit, maxSplit)) % l;
+    // Choose v2 from halfway around the neighbours
+    var v2 = neighbours[jdx];
 
     // The partition groups
     // v1 is in one and v2 is in the other

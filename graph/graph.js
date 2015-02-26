@@ -43,6 +43,9 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     this.edges.forEach(function(e) {
       if (e.id === edge.id) return false;
       var pt = edge.intersects(e);
+      if (pt)
+        // Round!
+        pt = { x : Math.round(pt.x), y : Math.round(pt.y) };
       var line = edge.line;
       var edgesCross = pt &&
         // Doesn't count as crossing if the two lines meet at the ends

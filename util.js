@@ -17,7 +17,7 @@ define([], function() {
       ret.push(list[keys[keysLeft[idx]]]);
       delete keys[keysLeft[idx]];
     }
-    return ret;
+    return (ret.length == 1) ? ret[0] : ret;
   };
 
   util.rateLimit = function(func, rate) {
