@@ -21,7 +21,7 @@ define(['util'], function(util) {
       //console.log("Please fix the max degree code");
       return false;
     }
-    var node = util.random.choose(1, choices);
+    var node = findIsolatedNode(choices, graph.nodes);
 
     // Sorted
     var neighbours = graph.radialOrderNeighbours(node);
@@ -72,6 +72,9 @@ define(['util'], function(util) {
   }
 
   function findIsolatedNode(chooseSet, allNodes) {
+    /* Find the most isolated node out of all nodes in `chooseSet`
+     * by comparing how close they are to each node in `allNodes` */
+
     // TODO: This could possibly be approximated by checking for how close
     // a node's neighbours are to the node. Either an average or the min
     // might work just as well.
