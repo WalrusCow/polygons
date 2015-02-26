@@ -36,6 +36,8 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     var graph = generateWheel(wheelSize, mid, radius);
     graph.makeBarycentric();
 
+    // TODO: Keep a ratio of nodes to edges and use that to determine
+    // whether to split a node or to add an edge
     for (var action = 0; action < 80; ++action) {
       if (graph.maxDegree < 4) {
         // No choice but to add an edge

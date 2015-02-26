@@ -13,6 +13,7 @@ define([], function() {
 
     for (var i = 0; i < num; ++i) {
       var keysLeft = Object.keys(keys);
+      if (!keysLeft.length) break;
       var idx = util.random.number(0, keysLeft.length);
       ret.push(list[keys[keysLeft[idx]]]);
       delete keys[keysLeft[idx]];

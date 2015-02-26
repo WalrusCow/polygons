@@ -222,7 +222,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       return true;
     }
 
-    if (u.adjacentTo(v)) {
+    if (u.id === v.id || u.adjacentTo(v)) {
       // Simple graph only
       return false;
     }
@@ -276,7 +276,6 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
       return false;
     }
 
-    this.computeMaxDegree();
     return true;
   };
 
@@ -288,6 +287,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     u.addEdge(edge);
     v.addEdge(edge);
     this.edges[id] = edge;
+    this.computeMaxDegree();
     return edge;
   };
 
@@ -348,6 +348,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
     // We want to remain 3-connected
     if (n1.length < 2 || n2.length < 2) {
       console.log('Each split set must have at least 2 vertices');
+      debugger;
       return false;
     }
 

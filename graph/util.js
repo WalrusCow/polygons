@@ -71,22 +71,55 @@ define(['util'], function(util) {
     return points;
   }
 
+  function findIsolatedNode(chooseSet, allNodes) {
+    // TODO: This could possibly be approximated by checking for how close
+    // a node's neighbours are to the node. Either an average or the min
+    // might work just as well.
+
+    function distance(n1, n2) {
+      function sq(x) { return x * x; }
+      return sq(n1.coords.x - n2.coords.x) + sq(n1.coords.y - n2.coords.y);
+    }
+
+    var isolatedNode;
+    var maxDistance;
+    chooseSet.forEach(function(node) {
+      // Find the closest node to this one
+      var closestD;
+      allNodes.forEach(function(other) {
+        if (other.id === node.id) return;
+
+        var d = distance(node, other);
+        if (!closestD || d < closestD) {
+          // Other is the closest to node so far
+          closestD = d;
+        }
+      });
+
+      if (!maxDistance || closestD > maxDistance) {
+        maxDistance = closestD;
+        isolatedNode = node;
+      }
+    });
+    return isolatedNode;
+  }
+
   GraphUtil.addRandomEdge = function(graph) {
     // Add a random edge in the graph that maintains planarity
     var TRIES = 20;
-    var nodes = graph.nodes;
 
-    for (var i = 0; i < TRIES; ++i) {
-      var choices = util.random.choose(2, nodes);
-      var u = choices[0];
-      var v = choices[1];
-      if (graph.addEdge(u, v)) {
-        //console.log("Adding random edge on attempt " + i);
-        return true;
+    // Try to create an edge from a node with no close nodes
+    var isolatedNode = findIsolatedNode(graph.nodes, graph.nodes);
+
+    // Now try to add an edge from isolatedNode
+    var nodesToTry = util.random.choose(TRIES, graph.nodes);
+    for (var i = 0; i < nodesToTry.length; ++i) {
+      if (nodesToTry[i].id === isolatedNode.id
+          || isolatedNode.adjacentTo(nodesToTry[i])) {
+        continue;
       }
+      if (graph.addEdge(isolatedNode, nodesToTry[i])) return true;
     }
-
-    //console.log("Failed to add random edge");
     return false;
   }
 
