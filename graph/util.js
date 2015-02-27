@@ -12,6 +12,11 @@ define(['util'], function(util) {
   }
 
   GraphUtil.splitRandomNode = function(graph) {
+    /* Possible improvements:
+     *  - Split nodes to maximize the difference in direction of edges
+     *  - Split the node whose neighbours are furthest away on average
+     *    (not the node furthest from all other nodes)
+     */
     // Choose a node at random to split
     var choices = [];
     graph.nodes.forEach(function(node) {
@@ -121,6 +126,19 @@ define(['util'], function(util) {
   }
 
   GraphUtil.addRandomEdge = function(graph) {
+    /* Possible improvements:
+     *  - Find the face of largest area and add an edge between opposing
+     *    nodes in the face.
+     *      - Traverse edges clockwise & anti-clockwise
+     *      - Find initial faces (when outer face is set) and keep track
+     *        while adding edges and splitting vertices.
+     *  - Improve success rate: For a given node, send out lines in several
+     *    directions. On the *first* (closest to the node) intersection of a
+     *    line, look at the ends. If an end is not adjacent to the node then
+     *    add an edge to it.
+     *  - Improve success rate (?): Try to add an edge only to nodes within
+     *    a certain radius? Try to add an edge to every node?
+     */
     // Add a random edge in the graph that maintains planarity
     var TRIES = 20;
 
