@@ -34,7 +34,7 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
       y : canvas.height / 2
     };
 
-    var radius = 700
+    var radius = Math.max(canvas.width / 2, canvas.height / 2) + 100;
     var wheelSize = util.random.number(8, 10);
 
     var graph = generateWheel(wheelSize, mid, radius);
