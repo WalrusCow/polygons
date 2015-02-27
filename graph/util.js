@@ -21,7 +21,7 @@ define(['util'], function(util) {
       //console.log("Please fix the max degree code");
       return false;
     }
-    var node = findIsolatedNode(choices, graph.nodes);
+    var node = findIsolatedNodes(choices, graph.nodes, 1)[0];
 
     // Sorted
     var neighbours = graph.radialOrderNeighbours(node);
@@ -71,9 +71,11 @@ define(['util'], function(util) {
     return points;
   }
 
-  function findIsolatedNode(chooseSet, allNodes) {
+  function findIsolatedNodes(chooseSet, allNodes, numNodes) {
     /* Find the most isolated node out of all nodes in `chooseSet`
      * by comparing how close they are to each node in `allNodes` */
+
+    numNodes = numNodes || 1;
 
     // TODO: This could possibly be approximated by checking for how close
     // a node's neighbours are to the node. Either an average or the min
@@ -84,13 +86,27 @@ define(['util'], function(util) {
       return sq(n1.coords.x - n2.coords.x) + sq(n1.coords.y - n2.coords.y);
     }
 
-    var isolatedNode;
-    var maxDistance;
+    var isolatedNodes = [];
+    function sortedAdd(dist, node) {
+      if (isolatedNodes.length < numNodes) {
+        isolatedNodes.push({dist: dist, node: node});
+        return;
+      }
+
+      for (var i = 0; i < isolatedNodes.length; ++i) {
+        if (isolatedNodes[i].dist < dist) {
+          isolatedNodes.splice(i, 0, {dist : dist, node : node});
+          isolatedNodes.pop();
+        }
+      }
+    }
+
     chooseSet.forEach(function(node) {
       // Find the closest node to this one
       var closestD;
       allNodes.forEach(function(other) {
         if (other.id === node.id) return;
+        if (node.fixed && other.fixed) return;
 
         var d = distance(node, other);
         if (!closestD || d < closestD) {
@@ -99,12 +115,9 @@ define(['util'], function(util) {
         }
       });
 
-      if (!maxDistance || closestD > maxDistance) {
-        maxDistance = closestD;
-        isolatedNode = node;
-      }
+      sortedAdd(closestD, node);
     });
-    return isolatedNode;
+    return isolatedNodes.map(function(x) { return x.node; });
   }
 
   GraphUtil.addRandomEdge = function(graph) {
@@ -112,7 +125,8 @@ define(['util'], function(util) {
     var TRIES = 20;
 
     // Try to create an edge from a node with no close nodes
-    var isolatedNode = findIsolatedNode(graph.nodes, graph.nodes);
+    var isolatedNodes = findIsolatedNodes(graph.nodes, graph.nodes, 6);
+    var isolatedNode = util.random.choose(1, isolatedNodes);
 
     // Now try to add an edge from isolatedNode
     var nodesToTry = util.random.choose(TRIES, graph.nodes);
@@ -126,8 +140,8 @@ define(['util'], function(util) {
       }
       if (graph.addEdge(isolatedNode, n)) return true;
     }
+    console.log("Fail add edge");
     return false;
   }
-
   return GraphUtil;
 });
