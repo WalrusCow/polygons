@@ -22,6 +22,9 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
   }
 
   return function(options) {
+    var EDGES_PER_NODE = 6;
+    var SPLIT_CHANCE = 0.35;
+
     var canvas = document.getElementById(options.canvas);
     var ctx = canvas.getContext('2d');
 
@@ -36,21 +39,38 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     var graph = generateWheel(wheelSize, mid, radius);
     graph.makeBarycentric();
 
+    var edgeCount = graph.edges.length;
+    var nodeCount = graph.nodes.length;
+
     // TODO: Keep a ratio of nodes to edges and use that to determine
     // whether to split a node or to add an edge
     for (var action = 0; action < 80; ++action) {
       if (graph.maxDegree < 4) {
         // No choice but to add an edge
-        graphUtil.addRandomEdge(graph);
+        if (graphUtil.addRandomEdge(graph)) {
+          edgeCount += 1;
+        }
         continue;
       }
 
-      var split = Math.random() < 0.7;
+      // To split or add edge?
+      var split;
+      if ((edgeCount / nodeCount) > EDGES_PER_NODE) {
+        // More than 5 edges per node
+        split = true;
+      } else {
+        split = Math.random() < SPLIT_CHANCE;
+      }
+
       if (split) {
-        graphUtil.splitRandomNode(graph);
+        if (graphUtil.splitRandomNode(graph)) {
+          nodeCount += 1;
+        }
       }
       else {
-        graphUtil.addRandomEdge(graph);
+        if (graphUtil.addRandomEdge(graph)) {
+          edgeCount += 1;
+        }
       }
     }
 

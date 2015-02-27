@@ -54,7 +54,7 @@ define(['util'], function(util) {
     });
 
     // Split it now!
-    graph.split(node, n1, n2);
+    return graph.split(node, n1, n2);
   }
 
   GraphUtil.convexPoints = function(num, mid, radius) {
@@ -116,12 +116,15 @@ define(['util'], function(util) {
 
     // Now try to add an edge from isolatedNode
     var nodesToTry = util.random.choose(TRIES, graph.nodes);
+    var fixed = isolatedNode.fixed;
     for (var i = 0; i < nodesToTry.length; ++i) {
-      if (nodesToTry[i].id === isolatedNode.id
-          || isolatedNode.adjacentTo(nodesToTry[i])) {
+      var n = nodesToTry[i];
+      if (n.id === isolatedNode.id
+          || isolatedNode.adjacentTo(n)
+          || fixed && n.fixed) {
         continue;
       }
-      if (graph.addEdge(isolatedNode, nodesToTry[i])) return true;
+      if (graph.addEdge(isolatedNode, n)) return true;
     }
     return false;
   }
