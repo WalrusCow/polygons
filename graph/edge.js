@@ -1,12 +1,13 @@
 define(['lines'], function(lines) {
   var Line = lines.Line;
 
-  function Edge(id, u, v) {
+  function Edge(id, u, v, options) {
+    options = options || {};
     this.id = id;
     this.u = u;
     this.v = v;
 
-    this._lineOpts = { strokeColour : '#808080' };
+    this._lineOpts = { strokeColour : options.colour || '#808080' };
   }
 
   Edge.prototype.otherEnd = function(end) {

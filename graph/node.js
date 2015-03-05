@@ -1,5 +1,6 @@
 define(['graph/edge'], function(Edge) {
-  function Node(id) {
+  function Node(id, options) {
+    options = options || {};
     this.id = id;
 
     this.neighbours = [];
@@ -7,7 +8,8 @@ define(['graph/edge'], function(Edge) {
     this.degree = 0;
 
     this.radius = 6;
-    this.color = '#2f55ee';
+    this.colour = options.colour || '#2f55ee';
+    this.fillColour = options.fillColour || '#fff';
   }
 
   Node.prototype.addEdge = function(edge) {
@@ -29,9 +31,9 @@ define(['graph/edge'], function(Edge) {
   Node.prototype.draw = function(ctx) {
     ctx.beginPath();
     ctx.arc(this.coords.x, this.coords.y, this.radius, 0, 2 * Math.PI, false);
-    ctx.fillStyle='white';
+    ctx.fillStyle = this.fillColour;
     ctx.fill();
-    ctx.strokeStyle = this.color;
+    ctx.strokeStyle = this.colour;
     ctx.stroke();
   };
 

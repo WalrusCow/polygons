@@ -1,6 +1,6 @@
 define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
-  function generateWheel(size, midPoint, radius) {
-    var graph = new Graph(midPoint, radius);
+  function generateWheel(size, midPoint, radius, options) {
+    var graph = new Graph(midPoint, radius, options);
     var midNode = graph.addNode();
     var lastNode;
     var firstNode;
@@ -37,7 +37,7 @@ define(['util', 'graph/util', 'graph/graph'], function(util, graphUtil, Graph) {
     var radius = Math.max(canvas.width / 2, canvas.height / 2) + 100;
     var wheelSize = util.random.number(8, 10);
 
-    var graph = generateWheel(wheelSize, mid, radius);
+    var graph = generateWheel(wheelSize, mid, radius, options.graph);
     graph.makeBarycentric();
 
     var edgeCount = graph.edges.length;

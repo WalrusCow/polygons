@@ -16,7 +16,8 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
   //
   // Graph class
   //
-  function Graph(midPoint, radius) {
+  function Graph(midPoint, radius, options) {
+    this.options = options || {};
     // Maintain a list of nodes that each have adjacency lists
     this.nodes = [];
     this.edges = [];
@@ -80,7 +81,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
 
   Graph.prototype.addNode = function(pt) {
     var id = firstFreeIndex(this.nodes);
-    this.nodes[id] = new Node(id, pt);
+    this.nodes[id] = new Node(id, this.options.node);
     return this.nodes[id];
   };
 
@@ -282,7 +283,7 @@ define(['lines', 'util', 'graph/node', 'graph/edge', 'graph/util', 'matrix'],
   Graph.prototype._addEdge = function(u, v) {
     // Directly add an edge with no checks
     var id = firstFreeIndex(this.edges);
-    var edge = new Edge(id, u, v);
+    var edge = new Edge(id, u, v, this.options.edge);
 
     u.addEdge(edge);
     v.addEdge(edge);
