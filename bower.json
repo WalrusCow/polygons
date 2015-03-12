@@ -1,0 +1,9 @@
+{
+  "name": "polygon",
+  "private": true,
+  "version": "1.0.0",
+  "ignore": ["LICENSE", "README.md", "main.html", "main.js"],
+  "dependencies": {
+    "requirejs": "2.1.16"
+  }
+}
